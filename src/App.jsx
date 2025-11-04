@@ -7,6 +7,8 @@ import {
 } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
+import CreateSurat from "./pages/CreateSurat";
+import CreateSuratRT from "./pages/CreateSuratRT";
 import ChatPage from "./pages/ChatPage";
 import LaporanPage from "./pages/LaporanPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -37,7 +39,8 @@ export default function App() {
             </RequireRole>
           }
         >
-          <Route index element={<HomeAdmin role="koordinator" />} />
+          <Route index element={<CreateSurat />} />
+          <Route path="buat-surat" element={<CreateSuratRT />} />
           <Route path="laporan" element={<LaporanAdmin role="koordinator" />} />
           <Route path="buat-laporan" element={<LaporanPage />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
