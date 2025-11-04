@@ -1,90 +1,106 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom'; // ⬅️ tambahkan ini
+import { useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import { login } from "../services/user";
+import jwt_decode from "jwt-decode";
 
-export default function LoginPage(){
-  const [email,setEmail]=useState('');
-  const [password,setPassword]=useState('');
-  const [show,setShow]=useState(false);
-  const [err,setErr]=useState('');
+export default function LoginPage() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const submit=(e)=>{
+  const submit = async (e) => {
     e.preventDefault();
-    setErr('');
-    // TODO: ganti dengan api.login(email, password)
-    window.location.replace('/'); // default: masuk sebagai warga
+    setLoading(true);
+
+    try {
+      const data = await login(username, password);
+
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+
+        await Swal.fire({
+          icon: "success",
+          title: "Login Berhasil!",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+
+        const token = localStorage.getItem("token");
+        const decoded = jwt_decode(token);
+        if (decoded.role === "admin") {
+          navigate("/admin", { replace: true });
+        } else if (decoded.role === "petugas") {
+          navigate("/petugas", { replace: true });
+        } else if (decoded.role === "koordinator") {
+          navigate("/koordinator", { replace: true });
+        } else {
+          navigate("/404", { replace: true });
+        }
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Login Gagal",
+        text: error.message || "Username atau password salah",
+        confirmButtonColor: "#2563eb",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="p-6">
-        <h1 className="text-3xl sm:text-4xl font-bold leading-tight">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-sm">
+        <h1 className="text-2xl font-bold text-center mb-8">
           Login to your account
         </h1>
-      </div>
 
-      <form onSubmit={submit} className="px-6 space-y-4">
-        <div>
-          <label className="block mb-2 text-neutral-800">Username</label>
-          <input
-            value={email}
-            onChange={e=>setEmail(e.target.value)}
-            placeholder="Enter your email address"
-            className="w-full rounded-2xl px-4 py-3 shadow-inner outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-2 text-neutral-800">Password</label>
-          <div className="relative">
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="block mb-2 text-gray-800">Username</label>
             <input
-              type={show? 'text':'password'}
-              value={password}
-              onChange={e=>setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="w-full rounded-2xl px-4 py-3 shadow-inner outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
-            <button
-              type="button"
-              onClick={()=>setShow(s=>!s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500"
-            >
-              {show? '🙈':'👁️'}
-            </button>
           </div>
-        </div>
 
-        {err && <p className="text-red-600 text-sm">{err}</p>}
+          <div>
+            <label className="block mb-2 text-gray-800">Password</label>
+            <div className="relative">
+              <input
+                type={show ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 pr-10 outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShow((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+              >
+                {show ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
 
-        <button className="w-full bg-blue-600 text-white rounded-2xl py-3 text-lg">
-          Login
-        </button>
-      </form>
-
-      {/* ⬇️ Tambahkan blok pemisah role di luar form */}
-      <div className="px-6 mt-6">
-        <div className="flex items-center gap-3 text-sm text-neutral-500">
-          <div className="flex-1 h-px bg-neutral-200" />
-          atau
-          <div className="flex-1 h-px bg-neutral-200" />
-        </div>
-
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Masuk sebagai Warga */}
-          <Link
-            to="/"
-            className="text-center rounded-2xl py-3 bg-blue-600 text-white"
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white rounded-lg py-2 text-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
-            Masuk Warga
-          </Link>
-
-          {/* Masuk sebagai Kelurahan/Pusat */}
-          <Link
-            to="/admin"
-            className="text-center rounded-2xl py-3 bg-neutral-900 text-white"
-          >
-            Masuk Kelurahan
-          </Link>
-        </div>
+            {loading ? "Loading..." : "Login"}
+          </button>
+        </form>
       </div>
     </div>
   );

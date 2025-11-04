@@ -1,35 +1,45 @@
-import { Link, useLocation } from 'react-router-dom';
-import { CgProfile } from 'react-icons/cg';
-import { BsChatDots } from 'react-icons/bs';
-import { FaArrowLeft } from 'react-icons/fa';
+import { Link, useNavigate } from "react-router-dom";
+import { BsChatDots } from "react-icons/bs";
+import { IoLogInOutline } from "react-icons/io5";
+import Swal from "sweetalert2";
 
-export default function Header({ backTo, title = 'Jumantik Digital' }) {
-  const { pathname } = useLocation();
-  const showChat = pathname !== '/chat';
+export default function Header({
+  title = "Jumantik Digital",
+  showChat = false,
+}) {
+  const navigate = useNavigate(); // ✅ dipanggil di dalam komponen, bukan di luar
+
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Yakin mau logout?",
+      text: "Kamu akan keluar dari akun ini.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, logout",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem("token");
+        Swal.fire({
+          title: "Berhasil logout!",
+          icon: "success",
+          showConfirmButton: false,
+          timer: 1200,
+        });
+        navigate("/login", { replace: true });
+      }
+    });
+  };
 
   return (
-    <header className="px-5 pt-4 pb-3 flex items-center justify-between">
-      {/* Kiri: back atau logo */}
-      {backTo ? (
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            to={backTo}
-            aria-label="Kembali"
-            className="p-2 sm:p-3 -ml-2 rounded-full hover:bg-black/5"
-          >
-            {/* ukuran ikon: mobile 24px, desktop lebih besar */}
-            <FaArrowLeft className="text-2xl sm:text-3xl" />
-          </Link>
-          <h1 className="text-xl font-semibold">{title}</h1>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 text-xl font-semibold">
-          <span className="text-2xl">🦟</span>
-          <span>{title}</span>
-        </div>
-      )}
+    <header className="px-5 pt-4 pb-3 flex items-center justify-between lg:hidden">
+      <div className="flex items-center gap-2 text-xl font-semibold">
+        <span className="text-2xl">🦟</span>
+        <span>{title}</span>
+      </div>
 
-      {/* Kanan: chat + profile (profile disembunyikan di mobile, besar di desktop) */}
       <div className="flex items-center gap-2 sm:gap-3">
         {showChat && (
           <Link
@@ -41,14 +51,12 @@ export default function Header({ backTo, title = 'Jumantik Digital' }) {
           </Link>
         )}
 
-        {/* Sembunyikan di mobile karena sudah ada bottom nav; tampil besar di desktop */}
-        <Link
-          to="/profile"
-          aria-label="Profile"
-          className="hidden sm:inline-flex p-2 sm:p-3 rounded-full hover:bg-black/5"
+        <button
+          onClick={handleLogout}
+          className="flex-1 flex flex-col items-center justify-center py-2 text-xs text-gray-500 hover:text-red-600 transition-colors"
         >
-          <CgProfile className="text-2xl sm:text-3xl" />
-        </Link>
+          <IoLogInOutline className="text-2xl sm:text-3xl" />
+        </button>
       </div>
     </header>
   );

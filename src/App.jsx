@@ -1,40 +1,65 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import HomePage from './pages/HomePage';
-import ChatPage from './pages/ChatPage';
-import LaporanPage from './pages/LaporanPage';
-import ProfilePage from './pages/ProfilePage';
-import './styles/index.css';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import HomePage from "./pages/HomePage";
+import ChatPage from "./pages/ChatPage";
+import LaporanPage from "./pages/LaporanPage";
+import ProfilePage from "./pages/ProfilePage";
+import "./styles/index.css";
+import AdminApp from "./admin/AdminApp";
 
-// 👉 import admin dashboard
-import AdminApp from './admin/AdminApp';
+import AccountsAdmin from "./admin/AccountsAdmin";
+import HomeAdmin from "./admin/HomeAdmin";
+import LaporanAdmin from "./admin/LaporanAdmin";
 
-// DEMO: anggap selalu logged-in (ubah nanti pakai /me)
-const isLoggedIn = () => true;
+import { RequireRole } from "./auth/validateRole";
+import { HomeRedirect } from "./auth/homeRedirect";
+import NotFound from "./pages/NotFound";
 
-export default function App(){
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* halaman login */}
-        <Route path="/login" element={<LoginPage/>}/>
+        {/* Route default */}
 
-        {/* halaman user (warga) */}
-        <Route path="/chat" element={<RequireAuth><ChatPage/></RequireAuth>} />
-        <Route path="/laporan" element={<RequireAuth><LaporanPage/></RequireAuth>} />
-        <Route path="/profile" element={<RequireAuth><ProfilePage/></RequireAuth>} />
-        <Route path="/" element={<RequireAuth><HomePage/></RequireAuth>} />
+        <Route path="/" element={<HomeRedirect />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/koordinator/*"
+          element={
+            <RequireRole allowedRoles={["koordinator"]}>
+              <AdminApp role="koordinator" />
+            </RequireRole>
+          }
+        >
+          <Route index element={<HomeAdmin role="koordinator" />} />
+          <Route path="laporan" element={<LaporanAdmin role="koordinator" />} />
+          <Route path="buat-laporan" element={<LaporanPage />} />
+          <Route path="*" element={<Navigate to="/404" replace />} />
+        </Route>
 
-        {/* ✨ halaman kelurahan/admin */}
-        <Route path="/admin/*" element={<AdminApp/>} />
+        <Route
+          path="/admin/*"
+          element={
+            <RequireRole allowedRoles={["admin"]}>
+              <AdminApp role="admin" />
+            </RequireRole>
+          }
+        >
+          <Route index element={<HomeAdmin />} />
+          <Route path="laporan" element={<LaporanAdmin role="admin" />} />
+          <Route path="akun" element={<AccountsAdmin />} />
+          <Route path="*" element={<Navigate to="/404" replace />} />
+        </Route>
 
-        {/* fallback */}
-        <Route path="*" element={<Navigate to="/"/>} />
+        <Route path="/404" element={<NotFound />} />
+        <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
     </BrowserRouter>
   );
-}
-
-function RequireAuth({children}){
-  return isLoggedIn()? children : <Navigate to="/login"/>;
 }

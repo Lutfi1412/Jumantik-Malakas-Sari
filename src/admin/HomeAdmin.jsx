@@ -1,77 +1,110 @@
 // src/admin/HomeAdmin.jsx
-import { useState, useRef } from 'react';
-import Modal from '../shared/Modal';
-import { FaPlus, FaEdit } from 'react-icons/fa';
-
-const dummy = [
-  { id: 1, title: 'Cegah DBD', desc: 'Tips pencegahan DBD...', image: '' },
-  { id: 2, title: 'Vaksinasi Lokal', desc: 'Info vaksinasi...', image: '' },
-  { id: 3, title: 'Tips 3M Plus', desc: 'Mengu ras, menutup, mengubur...', image: '' },
-];
+import { useState, useRef, useEffect } from "react";
+import { FaPlus, FaEdit, FaTrash, FaSave } from "react-icons/fa";
+import Modal from "../shared/Modal";
+import Swal from "sweetalert2";
+import { getkonten, deleteKonten } from "../services/konten"; // pastikan path sesuai
 
 export default function HomeAdmin() {
-  const [items, setItems] = useState(dummy);
+  const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-
-  // ====== file picker / drag-n-drop state ======
   const fileRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
 
-  function addContent() {
-    setEditing({ id: Date.now(), title: '', desc: '', image: '', __blobUrl: '' });
-    setOpen(true);
-  }
-  function editContent(it) {
-    setEditing({ ...it, __blobUrl: '' });
-    setOpen(true);
-  }
-  function save() {
-    setItems((arr) => {
-      const idx = arr.findIndex((a) => a.id === editing.id);
-      const payload = { id: editing.id, title: editing.title, desc: editing.desc, image: editing.image || '' };
-      if (idx > -1) {
-        const next = [...arr];
-        next[idx] = payload;
-        return next;
+  // 🚀 Fetch konten dari API
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await getkonten();
+        setItems(res.data || []);
+      } catch (err) {
+        console.error(err);
       }
-      return [payload, ...arr];
+    }
+    fetchData();
+  }, []);
+
+  // 🧩 Lock scroll body saat modal terbuka
+  useEffect(() => {
+    if (open) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "auto";
+    return () => (document.body.style.overflow = "auto");
+  }, [open]);
+
+  // === CRUD Functions ===
+  function addContent() {
+    setEditing({
+      id: Date.now(),
+      judul: "",
+      deskripsi: "",
+      gambar: "",
+      __blobUrl: "",
     });
-    // bersihkan blob URL sementara jika ada
-    if (editing?.__blobUrl) URL.revokeObjectURL(editing.__blobUrl);
-    setOpen(false);
+    setOpen(true);
   }
 
-  // ====== helpers untuk upload/preview gambar ======
+  function editContent(it) {
+    setEditing({ ...it, __blobUrl: "" });
+    setOpen(true);
+  }
+
+  async function handleDelete() {
+    if (!editing?.id) return;
+    const confirm = await Swal.fire({
+      title: "Hapus Konten?",
+      text: `Apakah kamu yakin ingin menghapus "${editing.judul}"?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, hapus",
+      cancelButtonText: "Batal",
+    });
+
+    if (confirm.isConfirmed) {
+      try {
+        await deleteKonten(editing.id);
+        setItems((prev) => prev.filter((x) => x.id !== editing.id));
+        setOpen(false);
+        Swal.fire("Berhasil!", "Konten berhasil dihapus", "success");
+      } catch (err) {
+        Swal.fire("Gagal", err.message, "error");
+      }
+    }
+  }
+
+  const handleSave = () => {
+    /* simpan data baru */
+  };
+  const handleEdit = () => {
+    /* update data */
+  };
+
+  // === Upload Image Handlers ===
   const openFile = () => fileRef.current?.click();
 
   const handleFiles = (files) => {
     const f = files?.[0];
     if (!f) return;
-    // revoke url lama bila ada
     if (editing?.__blobUrl) URL.revokeObjectURL(editing.__blobUrl);
     const url = URL.createObjectURL(f);
-    setEditing((e) => ({ ...e, image: url, __blobUrl: url }));
+    setEditing((e) => ({ ...e, gambar: url, __blobUrl: url }));
   };
 
   const onInputFile = (e) => handleFiles(e.target.files);
-
   const onDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
     handleFiles(e.dataTransfer.files);
   };
-
   const onDragOver = (e) => {
     e.preventDefault();
     if (!dragOver) setDragOver(true);
   };
   const onDragLeave = () => setDragOver(false);
-
   const clearImage = () => {
     if (editing?.__blobUrl) URL.revokeObjectURL(editing.__blobUrl);
-    setEditing((e) => ({ ...e, image: '', __blobUrl: '' }));
-    if (fileRef.current) fileRef.current.value = '';
+    setEditing((e) => ({ ...e, gambar: "", __blobUrl: "" }));
+    if (fileRef.current) fileRef.current.value = "";
   };
 
   return (
@@ -92,11 +125,17 @@ export default function HomeAdmin() {
       {/* Grid konten */}
       <div className="max-w-7xl mx-auto px-6 py-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {items.map((it) => (
-          <article key={it.id} className="rounded-2xl shadow border border-slate-100">
+          <article
+            key={it.id}
+            className="rounded-2xl shadow border border-slate-100"
+          >
             <div className="p-4 flex items-start justify-between">
               <div>
-                <h3 className="font-semibold">{it.title}</h3>
-                <p className="text-sm text-slate-500">{it.desc}</p>
+                <h3 className="font-semibold">{it.judul}</h3>
+                <p className="text-sm text-slate-500">{it.deskripsi}</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Petugas: {it.petugas}
+                </p>
               </div>
               <button
                 onClick={() => editContent(it)}
@@ -108,11 +147,14 @@ export default function HomeAdmin() {
             </div>
 
             <div className="px-4 pb-4">
-              {it.image ? (
+              {it.gambar ? (
                 <div className="rounded-xl overflow-hidden">
-                  {/* Preview rapi memenuhi container */}
                   <div className="w-full aspect-[16/9]">
-                    <img src={it.image} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={it.gambar}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
               ) : (
@@ -126,14 +168,16 @@ export default function HomeAdmin() {
       </div>
 
       {/* Modal Add/Edit */}
-      <Modal open={open} onClose={() => setOpen(false)} title="Add / Edit Konten">
+      <Modal open={open} onClose={() => setOpen(false)} title="Edit Konten">
         {editing && (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
             <div>
               <label className="block text-sm mb-1">Judul</label>
               <input
-                value={editing.title}
-                onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+                value={editing.judul}
+                onChange={(e) =>
+                  setEditing({ ...editing, judul: e.target.value })
+                }
                 className="w-full rounded-xl border px-3 py-2"
                 placeholder="Masukan judul konten …"
               />
@@ -143,32 +187,39 @@ export default function HomeAdmin() {
               <label className="block text-sm mb-1">Deskripsi Konten</label>
               <textarea
                 rows={4}
-                value={editing.desc}
-                onChange={(e) => setEditing({ ...editing, desc: e.target.value })}
+                value={editing.deskripsi}
+                onChange={(e) =>
+                  setEditing({ ...editing, deskripsi: e.target.value })
+                }
                 className="w-full rounded-xl border px-3 py-2"
                 placeholder="Masukan deskripsi …"
               />
             </div>
 
-            {/* ====== Dropzone / Click-to-Upload ====== */}
+            {/* Dropzone / Upload */}
             <div>
               <label className="block text-sm mb-1">Gambar</label>
               <div
                 role="button"
                 tabIndex={0}
                 onClick={openFile}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openFile()}
+                onKeyDown={(e) =>
+                  (e.key === "Enter" || e.key === " ") && openFile()
+                }
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onDrop={onDrop}
                 className={`rounded-xl border-2 border-dashed ${
-                  dragOver ? 'border-sky-500 bg-sky-50' : 'border-slate-300'
+                  dragOver ? "border-sky-500 bg-sky-50" : "border-slate-300"
                 }`}
               >
-                {/* preview akan nge-fit container (16:9) */}
                 <div className="w-full aspect-[16/9] overflow-hidden rounded-[10px]">
-                  {editing.image ? (
-                    <img src={editing.image} alt="preview" className="w-full h-full object-cover" />
+                  {editing.gambar ? (
+                    <img
+                      src={editing.gambar}
+                      alt="preview"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full grid place-items-center text-slate-400">
                       Seret & letakkan gambar di sini, atau klik untuk memilih
@@ -185,7 +236,7 @@ export default function HomeAdmin() {
                   className="hidden"
                   onChange={onInputFile}
                 />
-                {editing.image && (
+                {editing.gambar && (
                   <button
                     type="button"
                     onClick={clearImage}
@@ -196,15 +247,35 @@ export default function HomeAdmin() {
                 )}
               </div>
             </div>
-            {/* ====== End Dropzone ====== */}
 
-            <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setOpen(false)} className="px-4 py-2">
-                Batal
-              </button>
-              <button onClick={save} className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white">
-                Submit
-              </button>
+            {/* Tombol bawah */}
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              {items.find((x) => x.id === editing.id) ? (
+                // MODE EDIT
+                <>
+                  <button
+                    onClick={handleDelete}
+                    className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-2"
+                  >
+                    <FaTrash /> Hapus
+                  </button>
+
+                  <button
+                    onClick={handleEdit} // ← fungsi untuk simpan perubahan edit
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                  >
+                    <FaEdit /> Edit
+                  </button>
+                </>
+              ) : (
+                // MODE ADD (TAMBAH)
+                <button
+                  onClick={handleSave} // ← fungsi untuk simpan data baru
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2"
+                >
+                  <FaSave /> Simpan
+                </button>
+              )}
             </div>
           </div>
         )}
