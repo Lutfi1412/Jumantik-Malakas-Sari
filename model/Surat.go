@@ -25,9 +25,8 @@ type Tatanan struct {
 
 // Data surat
 type CreateSurat struct {
-	Tanggal       string       `json:"tanggal"`
+	TanggalID     int          `json:"tanggal_id"`
 	RT            int          `json:"rt"`
-	RW            int          `json:"rw"`
 	TotalBangunan int          `json:"total_bangunan"`
 	TotalJentik   int          `json:"total_jentik"`
 	ABJ           float32      `json:"abj"`
@@ -36,11 +35,18 @@ type CreateSurat struct {
 }
 
 type UpdateSurat struct {
-	Tanggal       string       `json:"tanggal"`
 	RT            int          `json:"rt"`
 	TotalBangunan int          `json:"total_bangunan"`
 	TotalJentik   int          `json:"total_jentik"`
 	ABJ           float32      `json:"abj"`
 	Jumlah        Jumlah       `json:"jumlah"`
 	JenisTatanan  JenisTatanan `json:"jenis_tatanan"`
+}
+
+type CreateTanggal struct {
+	Tanggal string `json:"tanggal"`
+}
+
+type DeleteTanggal struct {
+	IDs []int `json:"ids"`
 }

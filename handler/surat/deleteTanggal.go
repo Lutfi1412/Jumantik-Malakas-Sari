@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func DeleteSurat(c *gin.Context) {
+func DeleteTanggal(c *gin.Context) {
 	role := c.GetString("role")
 
 	// hanya admin dan koordinator yang boleh hapus
@@ -32,7 +32,7 @@ func DeleteSurat(c *gin.Context) {
 	}
 
 	// hapus semua laporan dengan id yang dikirim
-	query := `DELETE FROM surat WHERE id = ANY($1)`
+	query := `DELETE FROM tanggal WHERE id = ANY($1)`
 	result, err := config.Pool.Exec(context.Background(), query, input.IDs)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menghapus laporan"})

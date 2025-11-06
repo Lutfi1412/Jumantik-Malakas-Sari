@@ -35,6 +35,11 @@ func GetLaporan(c *gin.Context) {
 	var rowsData interface{}
 	var err error
 
+	if role != "koordinator" && role != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+
 	// Jika role adalah koordinator → ambil rw dari tabel users berdasarkan hashing_id
 	if role == "koordinator" {
 		err = config.Pool.QueryRow(context.Background(),

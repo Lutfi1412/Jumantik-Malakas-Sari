@@ -63,22 +63,17 @@ func UpdateSurat(c *gin.Context) {
 	}
 
 	// 🔹 Update data surat
-	query := `
-	UPDATE surat 
-	SET tanggal=$1, rt=$2, total_bangunan=$3, total_jentik=$4, abj=$5, 
-	    jumlah=$6::jsonb, jenis_tatanan=$7::jsonb
-	WHERE id=$8
-	`
+	query := `UPDATE surat SET rt=$1, jumlah=$2::jsonb, jenis_tatanan=$3::jsonb, total_bangunan=$4, total_jentik=$5, abj=$6 WHERE id=$7`
+
 	_, err = config.Pool.Exec(
 		context.Background(),
 		query,
-		surat.Tanggal,
 		surat.RT,
+		string(jumlahJSON),
+		string(jenisTatananJSON),
 		surat.TotalBangunan,
 		surat.TotalJentik,
 		surat.ABJ,
-		string(jumlahJSON),
-		string(jenisTatananJSON),
 		id,
 	)
 	if err != nil {

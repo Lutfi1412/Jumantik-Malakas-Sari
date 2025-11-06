@@ -57,7 +57,15 @@ func main() {
 		// --- SURAT---
 		authGroup.POST("/create-surat", surat.CreateSurat)
 		authGroup.PUT("/update-surat/:id", surat.UpdateSurat)
-		authGroup.DELETE("/delete-surat/:id", surat.DeleteSurat)
+		authGroup.DELETE("/delete-surat", surat.DeleteSurat)
+		authGroup.GET("/get-surat-rw", surat.GetSuratRW)
+		authGroup.GET("/get-surat-admin", surat.GetSuratAdmin)
+
+		//tanggal
+		authGroup.POST("/create-tanggal", surat.CreateTanggal)
+		authGroup.DELETE("/delete-tanggal", surat.DeleteTanggal)
+		authGroup.PUT("/update-tanggal/:id", surat.UpdateTanggal)
+		authGroup.GET("/get-tanggal", surat.GetTanggal)
 	}
 
 	r.Run("0.0.0.0:8080")

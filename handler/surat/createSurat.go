@@ -11,7 +11,6 @@ import (
 )
 
 func CreateSurat(c *gin.Context) {
-	userHashingID := c.GetString("id")
 	role := c.GetString("role")
 
 	if role != "koordinator" {
@@ -19,26 +18,12 @@ func CreateSurat(c *gin.Context) {
 		return
 	}
 
-	// 🔹 Ambil RW dari users berdasarkan hashing_id
-	var rw int
-	err := config.Pool.QueryRow(
-		context.Background(),
-		"SELECT rw FROM users WHERE hashing_id=$1",
-		userHashingID,
-	).Scan(&rw)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User tidak ditemukan"})
-		return
-	}
-
-	// 🔹 Bind JSON request
 	var surat model.CreateSurat
 	if err := c.ShouldBindJSON(&surat); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 🔹 Hitung total_bangunan dan total_jentik otomatis dari jenis_tatanan
 	totalBangunan := surat.JenisTatanan.RumahTangga.Dikunjungi +
 		surat.JenisTatanan.Perkantoran.Dikunjungi +
 		surat.JenisTatanan.InstPendidikan.Dikunjungi +
@@ -78,15 +63,14 @@ func CreateSurat(c *gin.Context) {
 
 	// 🧾 Simpan ke database
 	query := `
-	INSERT INTO surat (tanggal, rt, rw, total_bangunan, total_jentik, abj, jumlah, jenis_tatanan)
-	VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb)
+	INSERT INTO surat (tanggal_id, rt, total_bangunan, total_jentik, abj, jumlah, jenis_tatanan)
+	VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)
 	`
 	_, err = config.Pool.Exec(
 		context.Background(),
 		query,
-		surat.Tanggal,
+		surat.TanggalID,
 		surat.RT,
-		rw,
 		surat.TotalBangunan,
 		surat.TotalJentik,
 		surat.ABJ,

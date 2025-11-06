@@ -16,7 +16,7 @@ func UpdateLaporan(c *gin.Context) {
 
 	role := c.GetString("role")
 
-	if role == "warga" {
+	if role != "koordinator" && role != "admin" {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
 		return
 	}
