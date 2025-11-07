@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"api-jumantik/config"
+	"api-jumantik/model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,13 +14,13 @@ func GetTanggal(c *gin.Context) {
 	role := c.GetString("role")
 	userHashingID := c.GetString("id")
 
-	// Hanya role tertentu yang boleh
+	// 🔐 Validasi role
 	if role != "koordinator" && role != "admin" {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
 		return
 	}
 
-	// 🔹 Ambil rw berdasarkan hashing_id user
+	// 🔹 Ambil RW berdasarkan hashing_id user
 	var rw int
 	err := config.Pool.QueryRow(
 		context.Background(),
@@ -31,9 +32,10 @@ func GetTanggal(c *gin.Context) {
 		return
 	}
 
+	// 🔹 Query data tanggal
 	rows, err := config.Pool.Query(
 		context.Background(),
-		`SELECT tanggal FROM tanggal WHERE rw = $1 ORDER BY tanggal DESC`,
+		`SELECT id, tanggal FROM tanggal WHERE rw = $1 ORDER BY tanggal DESC`,
 		rw,
 	)
 	if err != nil {
@@ -42,19 +44,20 @@ func GetTanggal(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	// 🔹 Kumpulkan hasil query ke slice
-	var tanggalList []string
+	// 🔹 Masukkan hasil ke slice struct
+	var tanggalList []model.TanggalData
 	for rows.Next() {
-		var t string
-		if err := rows.Scan(&t); err != nil {
+		var t model.TanggalData
+		if err := rows.Scan(&t.ID, &t.Tanggal); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal baca data tanggal: " + err.Error()})
 			return
 		}
 		tanggalList = append(tanggalList, t)
 	}
 
+	// 🔹 Response JSON
 	c.JSON(http.StatusOK, gin.H{
-		"tanggal": tanggalList,
+		"data":    tanggalList,
 		"message": "Data tanggal berhasil diambil",
 	})
 }

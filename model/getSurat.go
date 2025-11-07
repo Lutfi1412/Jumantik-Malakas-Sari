@@ -6,6 +6,7 @@ type GetSuratRequest struct {
 
 // Struktur respon tiap surat
 type SuratData struct {
+	ID            int                    `json:"id"`
 	RT            int                    `json:"rt"`
 	Jumantik      int                    `json:"jumantik"`
 	Melapor       int                    `json:"melapor"`

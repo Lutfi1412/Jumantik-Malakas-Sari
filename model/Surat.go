@@ -50,3 +50,8 @@ type CreateTanggal struct {
 type DeleteTanggal struct {
 	IDs []int `json:"ids"`
 }
+
+type TanggalData struct {
+	ID      int    `json:"id"`
+	Tanggal string `json:"tanggal"`
+}

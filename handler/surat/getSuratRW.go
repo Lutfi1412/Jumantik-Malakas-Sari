@@ -33,7 +33,7 @@ func GetSuratRW(c *gin.Context) {
 
 	// 🔹 Ambil semua data surat berdasarkan tanggal_id
 	rows, err := config.Pool.Query(context.Background(), `
-		SELECT rt, jumlah, jenis_tatanan, total_bangunan, total_jentik, abj 
+		SELECT id, rt, jumlah, jenis_tatanan, total_bangunan, total_jentik, abj 
 		FROM surat 
 		WHERE tanggal_id = $1
 	`, input.TanggalID)
@@ -57,11 +57,11 @@ func GetSuratRW(c *gin.Context) {
 	}
 
 	for rows.Next() {
-		var rt, totalBangunan, totalJentik int
+		var rt, totalBangunan, totalJentik, id int
 		var abjFloat float32
 		var jumlahJSON, jenisJSON []byte
 
-		err := rows.Scan(&rt, &jumlahJSON, &jenisJSON, &totalBangunan, &totalJentik, &abjFloat)
+		err := rows.Scan(&id, &rt, &jumlahJSON, &jenisJSON, &totalBangunan, &totalJentik, &abjFloat)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
@@ -95,6 +95,7 @@ func GetSuratRW(c *gin.Context) {
 		}
 
 		dataList = append(dataList, model.SuratData{
+			ID:            id,
 			RT:            rt,
 			Jumantik:      jumlah["jumantik"],
 			Melapor:       jumlah["melapor"],
