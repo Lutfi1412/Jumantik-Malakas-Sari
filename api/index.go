@@ -77,7 +77,8 @@ func init() {
 		authGroup.PUT("/update-surat/:id", surat.UpdateSurat)
 		authGroup.DELETE("/delete-surat", surat.DeleteSurat)
 		authGroup.POST("/get-surat-rw", surat.GetSuratRW)
-		authGroup.GET("/get-surat-admin", surat.GetSuratAdmin)
+		authGroup.POST("/get-surat-admin", surat.GetSuratAdmin)
+		authGroup.POST("/get-rw", surat.GetRW)
 
 		// --- TANGGAL ---
 		authGroup.POST("/create-tanggal", surat.CreateTanggal)

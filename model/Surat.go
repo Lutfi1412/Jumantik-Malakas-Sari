@@ -55,3 +55,8 @@ type TanggalData struct {
 	ID      int    `json:"id"`
 	Tanggal string `json:"tanggal"`
 }
+
+type GetRW struct {
+	ID int `json:"id"`
+	RW int `json:"rw"`
+}

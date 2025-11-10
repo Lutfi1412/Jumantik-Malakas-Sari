@@ -12,6 +12,7 @@ import (
 
 func UpdateSurat(c *gin.Context) {
 	id := c.Param("id")
+	userHashingID := c.GetString("id")
 	role := c.GetString("role")
 
 	if role != "koordinator" {
@@ -22,6 +23,29 @@ func UpdateSurat(c *gin.Context) {
 	var surat model.UpdateSurat
 	if err := c.ShouldBindJSON(&surat); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var userRW int
+	err := config.Pool.QueryRow(context.Background(),
+		`SELECT rw FROM users WHERE hashing_id = $1`, userHashingID,
+	).Scan(&userRW)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "User tidak valid"})
+		return
+	}
+
+	var rwTanggal int
+	err = config.Pool.QueryRow(context.Background(),
+		`SELECT rw FROM tanggal WHERE id = $1`, id,
+	).Scan(&rwTanggal)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Tanggal tidak ditemukan"})
+		return
+	}
+
+	if rwTanggal != userRW {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Tidak boleh akses data RW lain"})
 		return
 	}
 

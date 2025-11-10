@@ -60,6 +60,7 @@ func main() {
 		authGroup.DELETE("/delete-surat", surat.DeleteSurat)
 		authGroup.GET("/get-surat-rw", surat.GetSuratRW)
 		authGroup.GET("/get-surat-admin", surat.GetSuratAdmin)
+		authGroup.POST("/get-rw", surat.GetRW)
 
 		//tanggal
 		authGroup.POST("/create-tanggal", surat.CreateTanggal)
@@ -70,3 +71,37 @@ func main() {
 
 	r.Run("0.0.0.0:8080")
 }
+
+// package main
+
+// import (
+// 	"fmt"
+// 	"time"
+
+// 	"github.com/golang-jwt/jwt/v5"
+// )
+
+// func main() {
+// 	// Secret key langsung ditulis manual
+// 	var jwtKey = []byte("KorbanMBG")
+
+// 	// Buat payload (claims)
+// 	claims := jwt.MapClaims{
+// 		"id":   1,                                    // ID user
+// 		"role": "admin",                              // Role user
+// 		"exp":  time.Now().Add(1 * time.Hour).Unix(), // Expired 1 jam
+// 	}
+
+// 	// Buat token
+// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+// 	// Tanda tangani token dengan secret key
+// 	tokenString, err := token.SignedString(jwtKey)
+// 	if err != nil {
+// 		fmt.Println("Gagal membuat token:", err)
+// 		return
+// 	}
+
+// 	fmt.Println("Token JWT berhasil dibuat:")
+// 	fmt.Println(tokenString)
+// }

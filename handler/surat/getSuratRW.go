@@ -14,24 +14,47 @@ import (
 
 // Handler
 func GetSuratRW(c *gin.Context) {
+	ID := c.GetString("id") // dari JWT, ini hashing_id user login
+	Role := c.GetString("role")
+
 	var input model.GetSuratRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid payload"})
 		return
 	}
 
-	// 🔹 Ambil tanggal & rw
-	var tanggal string
-	var rw int
+	if Role != "admin" && Role != "koordinator" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+
+	var userRW int
 	err := config.Pool.QueryRow(context.Background(),
-		"SELECT tanggal, rw FROM tanggal WHERE id = $1", input.TanggalID,
-	).Scan(&tanggal, &rw)
+		`SELECT rw FROM users WHERE hashing_id = $1`, ID,
+	).Scan(&userRW)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "User tidak valid"})
+		return
+	}
+
+	// Ambil tanggal dan RW dari tabel tanggal
+	var tanggal string
+	var rwTanggal int
+	err = config.Pool.QueryRow(context.Background(),
+		`SELECT tanggal, rw FROM tanggal WHERE id = $1`, input.TanggalID,
+	).Scan(&tanggal, &rwTanggal)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Tanggal tidak ditemukan"})
 		return
 	}
 
-	// 🔹 Ambil semua data surat berdasarkan tanggal_id
+	// Cek apakah RW tanggal sama dengan RW user login
+	if rwTanggal != userRW && userRW != 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Tidak boleh akses data RW lain"})
+		return
+	}
+
+	// Ambil semua surat berdasarkan tanggal_id
 	rows, err := config.Pool.Query(context.Background(), `
 		SELECT id, rt, jumlah, jenis_tatanan, total_bangunan, total_jentik, abj 
 		FROM surat 
@@ -57,31 +80,27 @@ func GetSuratRW(c *gin.Context) {
 	}
 
 	for rows.Next() {
-		var rt, totalBangunan, totalJentik, id int
+		var id, rt, totalBangunan, totalJentik int
 		var abjFloat float32
 		var jumlahJSON, jenisJSON []byte
 
-		err := rows.Scan(&id, &rt, &jumlahJSON, &jenisJSON, &totalBangunan, &totalJentik, &abjFloat)
-		if err != nil {
+		if err := rows.Scan(&id, &rt, &jumlahJSON, &jenisJSON, &totalBangunan, &totalJentik, &abjFloat); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 
-		// Parse JSON jumlah
 		var jumlah map[string]int
 		if err := json.Unmarshal(jumlahJSON, &jumlah); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal parsing jumlah"})
 			return
 		}
 
-		// Parse JSON jenis_tatanan
 		var jenis map[string]map[string]int
 		if err := json.Unmarshal(jenisJSON, &jenis); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal parsing jenis_tatanan"})
 			return
 		}
 
-		// Tambahkan ke total
 		total.Jumantik += jumlah["jumantik"]
 		total.Melapor += jumlah["melapor"]
 		total.TotalBangunan += totalBangunan
@@ -99,14 +118,13 @@ func GetSuratRW(c *gin.Context) {
 			RT:            rt,
 			Jumantik:      jumlah["jumantik"],
 			Melapor:       jumlah["melapor"],
-			JenisTatanan:  map[string]interface{}(convertJenis(valToAnyMap(jenis))),
+			JenisTatanan:  convertJenis(valToAnyMap(jenis)),
 			TotalBangunan: totalBangunan,
 			TotalJentik:   totalJentik,
 			ABJ:           fmt.Sprintf("%.1f%%", abjFloat),
 		})
 	}
 
-	// Hitung total ABJ
 	if total.TotalBangunan > 0 {
 		total.ABJ = fmt.Sprintf("%.1f%%", float64(total.TotalBangunan-total.TotalJentik)/float64(total.TotalBangunan)*100)
 	}
@@ -119,11 +137,11 @@ func GetSuratRW(c *gin.Context) {
 		"data":    dataList,
 		"total":   total,
 		"tanggal": tanggal,
-		"rw":      rw,
+		"rw":      rwTanggal,
 	})
 }
 
-// Helper untuk ubah map[string]map[string]int -> map[string]interface{}
+// Helper
 func convertJenis(m map[string]map[string]int) map[string]interface{} {
 	out := make(map[string]interface{})
 	for k, v := range m {

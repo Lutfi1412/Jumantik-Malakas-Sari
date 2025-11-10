@@ -31,11 +31,11 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	role := c.GetString("role")
-	if role != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
-		return
-	}
+	// role := c.GetString("role")
+	// if role != "admin" {
+	// 	c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+	// 	return
+	// }
 
 	if input.Role != "admin" && input.Role != "koordinator" && input.Role != "petugas" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid role"})
