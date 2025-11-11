@@ -31,11 +31,11 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	// role := c.GetString("role")
-	// if role != "admin" {
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
-	// 	return
-	// }
+	role := c.GetString("role")
+	if role != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
 
 	if input.Role != "admin" && input.Role != "koordinator" && input.Role != "petugas" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid role"})
@@ -64,8 +64,8 @@ func CreateUser(c *gin.Context) {
 	}
 
 	query := `
-    INSERT INTO users (nama, rt, rw, role, username, password)
-    VALUES ($1, $2, $3, $4, $5, $6)
+    INSERT INTO users (nama, rt, rw, role, username, password, nama_rw)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING id`
 	err = config.Pool.QueryRow(context.Background(), query,
 		input.Nama,
@@ -74,6 +74,7 @@ func CreateUser(c *gin.Context) {
 		input.Role,
 		usernameHash,
 		string(hashedPassword),
+		input.NamaRW,
 	).Scan(&id)
 
 	if err != nil {

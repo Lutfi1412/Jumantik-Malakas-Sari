@@ -18,8 +18,15 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
+	// Gunakan COALESCE agar kolom NULL dikembalikan sebagai string kosong
 	query := `
-		SELECT hashing_id, nama, rw, role, rt
+		SELECT 
+			hashing_id, 
+			nama, 
+			rw, 
+			role, 
+			rt, 
+			COALESCE(nama_rw, '') AS nama_rw
 		FROM users
 		ORDER BY 
 			CASE 
@@ -41,15 +48,14 @@ func GetUser(c *gin.Context) {
 
 	for rows.Next() {
 		var user model.TableUser
-		err := rows.Scan(&user.Id, &user.Nama, &user.Rw, &user.Role, &user.Rt)
-		if err != nil {
+		if err := rows.Scan(&user.Id, &user.Nama, &user.Rw, &user.Role, &user.Rt, &user.NamaRW); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Error scanning user data"})
 			return
 		}
 
-		// hapus prefix \ atau \\ sehingga string mulai langsung dari "x"
+		// hapus prefix "\" atau "\\" sehingga string mulai langsung dari "x"
 		if len(user.Id) >= 1 && (user.Id[0] == '\\' || user.Id[:2] == `\\`) {
-			user.Id = user.Id[len(`\`):] // hapus satu karakter \ di depan
+			user.Id = user.Id[len(`\`):]
 		}
 
 		users = append(users, user)

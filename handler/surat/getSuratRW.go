@@ -54,6 +54,16 @@ func GetSuratRW(c *gin.Context) {
 		return
 	}
 
+	// ✅ Ambil nama koordinator berdasarkan rwTanggal
+	var namaKoor, namaRW string
+	err = config.Pool.QueryRow(context.Background(),
+		`SELECT nama, nama_rw FROM users WHERE rw = $1 AND role = 'koordinator' LIMIT 1`,
+		rwTanggal,
+	).Scan(&namaKoor, &namaRW)
+	if err != nil {
+		namaRW = "-"
+	}
+
 	// Ambil semua surat berdasarkan tanggal_id
 	rows, err := config.Pool.Query(context.Background(), `
 		SELECT id, rt, jumlah, jenis_tatanan, total_bangunan, total_jentik, abj 
@@ -133,11 +143,14 @@ func GetSuratRW(c *gin.Context) {
 		return dataList[i].RT < dataList[j].RT
 	})
 
+	// ✅ Tambahkan nama koordinator ke response
 	c.JSON(http.StatusOK, gin.H{
-		"data":    dataList,
-		"total":   total,
-		"tanggal": tanggal,
-		"rw":      rwTanggal,
+		"data":     dataList,
+		"total":    total,
+		"tanggal":  tanggal,
+		"rw":       rwTanggal,
+		"namakoor": namaKoor,
+		"namarw":   namaRW,
 	})
 }
 

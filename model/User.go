@@ -7,6 +7,7 @@ type CreateUser struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 	Role     string `json:"role" binding:"required"`
+	NamaRW   string `json:"nama_rw"`
 }
 
 type LoginInput struct {
@@ -24,9 +25,10 @@ type GetUser struct {
 }
 
 type TableUser struct {
-	Id   string `json:"id"`
-	Nama string `json:"nama"`
-	Rw   int32  `json:"rw"`
-	Role string `json:"role"`
-	Rt   int32  `json:"rt"`
+	Id     string `json:"id"`
+	Nama   string `json:"nama"`
+	Rw     int32  `json:"rw"`
+	Role   string `json:"role"`
+	Rt     int32  `json:"rt"`
+	NamaRW string `json:"nama_rw"`
 }
