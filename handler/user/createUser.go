@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"api-jumantik/config"
 	"api-jumantik/model"
@@ -15,59 +17,80 @@ import (
 )
 
 func CreateUser(c *gin.Context) {
+	// 1) Method guard (opsional jika router sudah POST-only)
 	if c.Request.Method != http.MethodPost {
-		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"message": "Metode tidak diizinkan"})
 		return
 	}
 
-	if c.GetHeader("Content-Type") != "application/json" {
-		c.JSON(http.StatusUnsupportedMediaType, gin.H{"error": "Invalid header, use application/json"})
+	// 2) Content-Type tolerant check (bisa mengandung ; charset=utf-8)
+	ct := c.GetHeader("Content-Type")
+	if ct == "" || !strings.HasPrefix(strings.ToLower(ct), "application/json") {
+		c.JSON(http.StatusUnsupportedMediaType, gin.H{"message": "Header tidak valid, gunakan application/json"})
 		return
 	}
 
+	// 3) Bind & basic validation
 	var input model.CreateUser
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Input data tidak valid"})
+		return
+	}
+	if strings.TrimSpace(input.Username) == "" ||
+		strings.TrimSpace(input.Password) == "" ||
+		strings.TrimSpace(input.Nama) == "" ||
+		strings.TrimSpace(input.Role) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Field wajib tidak boleh kosong"})
 		return
 	}
 
+	// 4) Authorization (ambil dari context yang diisi middleware)
 	role := c.GetString("role")
 	if role != "admin" {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
 		return
 	}
 
-	if input.Role != "admin" && input.Role != "koordinator" && input.Role != "petugas" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid role"})
+	// 5) Validasi role yang boleh dibuat
+	switch input.Role {
+	case "admin", "koordinator", "petugas":
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Peran (role) tidak valid"})
 		return
 	}
 
+	// 6) Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to hash password"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengenkripsi password"})
 		return
 	}
 
-	var id int
-
+	// 7) Cek username unik (disimpan dalam bentuk hash username)
 	usernameHash := util.HashUsername(input.Username)
 
 	var exists bool
-	err = config.Pool.QueryRow(context.Background(), "SELECT EXISTS(SELECT 1 FROM users WHERE username=$1)", usernameHash).Scan(&exists)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal cek username"})
+	if err := config.Pool.
+		QueryRow(c.Request.Context(), `SELECT EXISTS(SELECT 1 FROM users WHERE username=$1)`, usernameHash).
+		Scan(&exists); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Terjadi kesalahan saat memeriksa username"})
 		return
 	}
 	if exists {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Username sudah digunakan"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Username sudah terdaftar"})
 		return
 	}
 
-	query := `
-    INSERT INTO users (nama, rt, rw, role, username, password, nama_rw)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id`
-	err = config.Pool.QueryRow(context.Background(), query,
+	// 8) Insert user
+	var id int
+	const qInsert = `
+		INSERT INTO users (nama, rt, rw, role, username, password, nama_rw)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id;
+	`
+	err = config.Pool.QueryRow(
+		c.Request.Context(),
+		qInsert,
 		input.Nama,
 		input.Rt,
 		input.Rw,
@@ -83,26 +106,28 @@ func CreateUser(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Username sudah digunakan"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menyimpan data pengguna"})
 		return
 	}
 
-	hashingID, err := bcrypt.GenerateFromPassword([]byte(string(id)), bcrypt.DefaultCost)
+	// 9) Buat hashing_id dari ID yang benar (pakai strconv.Itoa, bukan string(id))
+	hashingID, err := bcrypt.GenerateFromPassword([]byte(strconv.Itoa(id)), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to hash password"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal membuat ID pengguna"})
 		return
 	}
 
-	_, err = config.Pool.Exec(context.Background(),
+	if _, err := config.Pool.Exec(
+		c.Request.Context(),
 		`UPDATE users SET hashing_id = $1 WHERE id = $2`,
 		hashingID, id,
-	)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal update"})
+	); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal memperbarui data pengguna"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "User created successfully",
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Pengguna berhasil dibuat",
+		// "id":      id, // aktifkan jika ingin mengembalikan id
 	})
 }

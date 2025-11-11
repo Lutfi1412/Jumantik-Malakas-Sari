@@ -15,13 +15,13 @@ func UpdateTanggal(c *gin.Context) {
 	role := c.GetString("role")
 
 	if role == "warga" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Akses ditolak, hanya koordinator atau admin yang dapat memperbarui tanggal."})
 		return
 	}
 
 	var input model.CreateTanggal
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Format data tidak valid, pastikan data yang dikirim sudah benar."})
 		return
 	}
 
@@ -31,7 +31,7 @@ func UpdateTanggal(c *gin.Context) {
 		`SELECT rw FROM tanggal WHERE id = $1`, ID,
 	).Scan(&currentRW)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Data tidak ditemukan"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "Data tanggal tidak ditemukan."})
 		return
 	}
 
@@ -44,12 +44,12 @@ func UpdateTanggal(c *gin.Context) {
 		)`, input.Tanggal, currentRW,
 	).Scan(&exists)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Terjadi kesalahan saat memeriksa data tanggal: " + err.Error()})
 		return
 	}
 
 	if exists {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Tanggal dan RW sudah ada"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Tanggal dengan RW tersebut sudah terdaftar, silakan gunakan tanggal lain."})
 		return
 	}
 
@@ -61,16 +61,16 @@ func UpdateTanggal(c *gin.Context) {
 	`
 	result, err := config.Pool.Exec(context.Background(), queryUpdate, input.Tanggal, ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal memperbarui data tanggal: " + err.Error()})
 		return
 	}
 
 	if result.RowsAffected() == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Laporan tidak ditemukan"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "Tidak ada data tanggal yang diperbarui."})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Tanggal berhasil diperbarui",
+		"message": "Data tanggal berhasil diperbarui.",
 	})
 }

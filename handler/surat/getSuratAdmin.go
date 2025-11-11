@@ -19,12 +19,12 @@ func GetSuratAdmin(c *gin.Context) {
 	role := c.GetString("role")
 
 	if role != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Tidak diizinkan. Hanya admin yang dapat mengakses data surat."})
 		return
 	}
 	var input model.GetSuratAdminRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Payload tidak valid"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Format data tidak valid"})
 		return
 	}
 
@@ -32,7 +32,7 @@ func GetSuratAdmin(c *gin.Context) {
 
 	rows, err := config.Pool.Query(ctx, `SELECT id, rw FROM tanggal WHERE tanggal = $1`, input.Tanggal)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal ambil data tanggal: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengambil data tanggal"})
 		return
 	}
 	defer rows.Close()
@@ -41,7 +41,7 @@ func GetSuratAdmin(c *gin.Context) {
 	for rows.Next() {
 		var id, rw int
 		if err := rows.Scan(&id, &rw); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal membaca data tanggal"})
 			return
 		}
 		rwMap[id] = rw
@@ -59,7 +59,7 @@ func GetSuratAdmin(c *gin.Context) {
 		WHERE tanggal_id = ANY($1)
 	`, arrayKeys(rwMap))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal ambil data surat: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengambil data surat"})
 		return
 	}
 	defer rows2.Close()
@@ -80,7 +80,7 @@ func GetSuratAdmin(c *gin.Context) {
 
 		err := rows2.Scan(&tanggalID, &jumlahJSON, &jenisJSON, &totalBangunan, &totalJentik, &abj)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal membaca data surat"})
 			return
 		}
 
@@ -92,11 +92,11 @@ func GetSuratAdmin(c *gin.Context) {
 		var jumlah map[string]int
 		var jenis JenisTatanan
 		if err := json.Unmarshal(jumlahJSON, &jumlah); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Error parsing jumlah JSON"})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal membaca data jumlah"})
 			return
 		}
 		if err := json.Unmarshal(jenisJSON, &jenis); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Error parsing jenis_tatanan JSON"})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal membaca data jenis tatanan"})
 			return
 		}
 

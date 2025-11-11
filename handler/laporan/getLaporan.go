@@ -36,7 +36,7 @@ func GetLaporan(c *gin.Context) {
 	var err error
 
 	if role != "koordinator" && role != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Tidak diizinkan. Hanya admin atau koordinator yang dapat melihat data laporan."})
 		return
 	}
 
@@ -91,7 +91,7 @@ func GetLaporan(c *gin.Context) {
 	for rows.Next() {
 		var d model.LaporanResponse
 		if err := rows.Scan(&d.Id, &d.Tanggal, &d.Rt, &d.Rw, &d.DetailAlamat, &d.Pelapor, &d.Latitude, &d.Longitude); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca data"})
 			return
 		}
 		data = append(data, d)
@@ -112,7 +112,7 @@ func GetLaporan(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal hitung total"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menghitung total data"})
 		return
 	}
 

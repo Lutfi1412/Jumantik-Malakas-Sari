@@ -15,7 +15,7 @@ func CreateTanggal(c *gin.Context) {
 	role := c.GetString("role")
 
 	if role != "admin" && role != "koordinator" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Tidak diizinkan. Hanya admin atau koordinator yang dapat menambahkan tanggal."})
 		return
 	}
 
@@ -27,13 +27,13 @@ func CreateTanggal(c *gin.Context) {
 		userHashingID,
 	).Scan(&rw)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User tidak ditemukan"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Pengguna tidak ditemukan"})
 		return
 	}
 
 	var input model.CreateTanggal
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Format data tidak valid"})
 		return
 	}
 
@@ -46,11 +46,11 @@ func CreateTanggal(c *gin.Context) {
     `
 	err = config.Pool.QueryRow(context.Background(), checkQuery, input.Tanggal, rw).Scan(&exists)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal cek data: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal memeriksa data"})
 		return
 	}
 	if exists {
-		c.JSON(http.StatusConflict, gin.H{"message": "Tanggal ini sudah ada untuk RW tersebut"})
+		c.JSON(http.StatusConflict, gin.H{"message": "Tanggal tersebut sudah terdaftar untuk RW ini"})
 		return
 	}
 
@@ -61,7 +61,7 @@ func CreateTanggal(c *gin.Context) {
     `
 	_, err = config.Pool.Exec(context.Background(), query, input.Tanggal, rw)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menyimpan tanggal"})
 		return
 	}
 

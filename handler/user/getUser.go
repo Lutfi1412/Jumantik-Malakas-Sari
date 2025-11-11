@@ -14,19 +14,12 @@ func GetUser(c *gin.Context) {
 	role := c.GetString("role")
 
 	if role != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Akses ditolak, hanya admin yang dapat melihat data pengguna"})
 		return
 	}
 
-	// Gunakan COALESCE agar kolom NULL dikembalikan sebagai string kosong
 	query := `
-		SELECT 
-			hashing_id, 
-			nama, 
-			rw, 
-			role, 
-			rt, 
-			COALESCE(nama_rw, '') AS nama_rw
+		SELECT hashing_id, nama, rw, role, rt
 		FROM users
 		ORDER BY 
 			CASE 
@@ -39,7 +32,7 @@ func GetUser(c *gin.Context) {
 
 	rows, err := config.Pool.Query(context.Background(), query)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to fetch users"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengambil data pengguna"})
 		return
 	}
 	defer rows.Close()
@@ -48,14 +41,15 @@ func GetUser(c *gin.Context) {
 
 	for rows.Next() {
 		var user model.TableUser
-		if err := rows.Scan(&user.Id, &user.Nama, &user.Rw, &user.Role, &user.Rt, &user.NamaRW); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Error scanning user data"})
+		err := rows.Scan(&user.Id, &user.Nama, &user.Rw, &user.Role, &user.Rt)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Terjadi kesalahan saat membaca data pengguna"})
 			return
 		}
 
-		// hapus prefix "\" atau "\\" sehingga string mulai langsung dari "x"
+		// hapus prefix \ atau \\ sehingga string mulai langsung dari "x"
 		if len(user.Id) >= 1 && (user.Id[0] == '\\' || user.Id[:2] == `\\`) {
-			user.Id = user.Id[len(`\`):]
+			user.Id = user.Id[len(`\`):] // hapus satu karakter \ di depan
 		}
 
 		users = append(users, user)
@@ -66,7 +60,7 @@ func GetUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Success",
+		"message": "Data pengguna berhasil diambil",
 		"data":    response,
 	})
 }

@@ -16,7 +16,7 @@ func CreateLaporan(c *gin.Context) {
 
 	var input model.CreateLaporan
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Input data tidak valid"})
 		return
 	}
 
@@ -40,7 +40,7 @@ func CreateLaporan(c *gin.Context) {
 		input.Longitude,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menyimpan laporan"})
 		return
 	}
 

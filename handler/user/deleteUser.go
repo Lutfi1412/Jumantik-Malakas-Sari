@@ -14,13 +14,13 @@ func DeleteUser(c *gin.Context) {
 	hashingID = `\` + hashingID
 
 	if hashingID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Missing user id (hashing_id)"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID pengguna (hashing_id) tidak ditemukan"})
 		return
 	}
 
 	role := c.GetString("role")
 	if role != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Akses ditolak, hanya admin yang dapat menghapus pengguna"})
 		return
 	}
 
@@ -28,14 +28,14 @@ func DeleteUser(c *gin.Context) {
 	query := `DELETE FROM users WHERE hashing_id = $1`
 	result, err := config.Pool.Exec(context.Background(), query, hashingID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to delete user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Terjadi kesalahan saat menghapus pengguna"})
 		return
 	}
 
 	if result.RowsAffected() == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "Pengguna tidak ditemukan"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Pengguna berhasil dihapus"})
 }

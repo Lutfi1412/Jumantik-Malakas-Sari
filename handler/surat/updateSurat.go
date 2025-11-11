@@ -16,13 +16,13 @@ func UpdateSurat(c *gin.Context) {
 	role := c.GetString("role")
 
 	if role != "koordinator" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Akses ditolak, hanya koordinator yang dapat memperbarui data surat"})
 		return
 	}
 
 	var surat model.UpdateSurat
 	if err := c.ShouldBindJSON(&surat); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Format data tidak valid"})
 		return
 	}
 
@@ -31,7 +31,7 @@ func UpdateSurat(c *gin.Context) {
 		`SELECT rw FROM users WHERE hashing_id = $1`, userHashingID,
 	).Scan(&userRW)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User tidak valid"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Data pengguna tidak ditemukan atau tidak valid"})
 		return
 	}
 
@@ -40,12 +40,12 @@ func UpdateSurat(c *gin.Context) {
 		`SELECT rw FROM tanggal WHERE id = $1`, id,
 	).Scan(&rwTanggal)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Tanggal tidak ditemukan"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "Data tanggal yang dimaksud tidak ditemukan"})
 		return
 	}
 
 	if rwTanggal != userRW {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Tidak boleh akses data RW lain"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Anda tidak memiliki izin untuk mengubah data RW lain"})
 		return
 	}
 
@@ -76,13 +76,13 @@ func UpdateSurat(c *gin.Context) {
 	// 🔹 Konversi struct ke JSON string
 	jumlahJSON, err := json.Marshal(surat.Jumlah)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal konversi jumlah ke JSON"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengubah data jumlah ke format JSON"})
 		return
 	}
 
 	jenisTatananJSON, err := json.Marshal(surat.JenisTatanan)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal konversi jenis_tatanan ke JSON"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengubah data jenis tatanan ke format JSON"})
 		return
 	}
 
@@ -101,9 +101,9 @@ func UpdateSurat(c *gin.Context) {
 		id,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal memperbarui data surat di database"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Surat berhasil diperbarui"})
+	c.JSON(http.StatusOK, gin.H{"message": "Data surat berhasil diperbarui"})
 }

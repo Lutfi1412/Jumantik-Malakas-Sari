@@ -16,7 +16,7 @@ func GetRT(c *gin.Context) {
 	var err error
 
 	if role != "koordinator" && role != "petugas" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Tidak diizinkan. Hanya koordinator atau petugas yang dapat mengakses data RT."})
 		return
 	}
 
@@ -24,7 +24,7 @@ func GetRT(c *gin.Context) {
 		`SELECT rt FROM users WHERE hashing_id = $1`, userHashingID,
 	).Scan(&rt)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengambil data RT pengguna"})
 		return
 	}
 

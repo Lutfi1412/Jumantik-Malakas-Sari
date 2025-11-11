@@ -18,20 +18,20 @@ func UpdateUser(c *gin.Context) {
 	role := c.GetString("role")
 
 	if c.GetHeader("Content-Type") != "application/json" {
-		c.JSON(http.StatusUnsupportedMediaType, gin.H{"message": "Invalid header, use application/json"})
+		c.JSON(http.StatusUnsupportedMediaType, gin.H{"message": "Header tidak valid, gunakan application/json"})
 		return
 	}
 
 	var newPassword string
 
 	if role != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Akses ditolak, hanya admin yang dapat memperbarui data pengguna"})
 		return
 	}
 
 	var input model.UpdateUser
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Input data tidak valid"})
 		return
 	}
 
@@ -39,7 +39,7 @@ func UpdateUser(c *gin.Context) {
 	newPassword = input.PasswordNew
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to hash password"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengenkripsi password baru"})
 		return
 	}
 
@@ -49,9 +49,9 @@ func UpdateUser(c *gin.Context) {
 		string(hashedPassword), usernameHash, hashingID,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal memperbarui data pengguna"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Password pengguna berhasil diperbarui"})
 }

@@ -19,12 +19,12 @@ func GetSuratRW(c *gin.Context) {
 
 	var input model.GetSuratRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid payload"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Format data yang dikirim tidak valid"})
 		return
 	}
 
 	if Role != "admin" && Role != "koordinator" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Akses ditolak, Hanya admin atau koordinator yang dapat mengakses data ini"})
 		return
 	}
 
@@ -33,7 +33,7 @@ func GetSuratRW(c *gin.Context) {
 		`SELECT rw FROM users WHERE hashing_id = $1`, ID,
 	).Scan(&userRW)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User tidak valid"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Data pengguna tidak ditemukan atau tidak valid"})
 		return
 	}
 
@@ -44,13 +44,13 @@ func GetSuratRW(c *gin.Context) {
 		`SELECT tanggal, rw FROM tanggal WHERE id = $1`, input.TanggalID,
 	).Scan(&tanggal, &rwTanggal)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Tanggal tidak ditemukan"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "Data tanggal tidak ditemukan"})
 		return
 	}
 
 	// Cek apakah RW tanggal sama dengan RW user login
 	if rwTanggal != userRW && userRW != 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Tidak boleh akses data RW lain"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Anda tidak memiliki izin untuk mengakses data RW lain"})
 		return
 	}
 
@@ -71,7 +71,7 @@ func GetSuratRW(c *gin.Context) {
 		WHERE tanggal_id = $1
 	`, input.TanggalID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengambil data surat: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Terjadi kesalahan saat mengambil data surat: " + err.Error()})
 		return
 	}
 	defer rows.Close()
@@ -95,19 +95,19 @@ func GetSuratRW(c *gin.Context) {
 		var jumlahJSON, jenisJSON []byte
 
 		if err := rows.Scan(&id, &rt, &jumlahJSON, &jenisJSON, &totalBangunan, &totalJentik, &abjFloat); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Terjadi kesalahan saat membaca data surat"})
 			return
 		}
 
 		var jumlah map[string]int
 		if err := json.Unmarshal(jumlahJSON, &jumlah); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal parsing jumlah"})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal memproses data jumlah surat"})
 			return
 		}
 
 		var jenis map[string]map[string]int
 		if err := json.Unmarshal(jenisJSON, &jenis); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal parsing jenis_tatanan"})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal memproses data jenis tatanan"})
 			return
 		}
 

@@ -15,13 +15,13 @@ func GetRW(c *gin.Context) {
 	var err error
 
 	if role != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Tidak diizinkan. Hanya admin yang dapat mengakses data RW."})
 		return
 	}
 
 	var input model.GetSuratAdminRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid payload"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Format data tidak valid"})
 		return
 	}
 
@@ -31,7 +31,7 @@ func GetRW(c *gin.Context) {
 		input.Tanggal,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal ambil tanggal: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengambil data tanggal"})
 		return
 	}
 	defer rows.Close()
@@ -40,7 +40,7 @@ func GetRW(c *gin.Context) {
 	for rows.Next() {
 		var t model.GetRW
 		if err := rows.Scan(&t.ID, &t.RW); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal baca data tanggal: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal membaca data RW"})
 			return
 		}
 		if t.RW == 0 {
@@ -52,6 +52,6 @@ func GetRW(c *gin.Context) {
 	// 🔹 Response JSON
 	c.JSON(http.StatusOK, gin.H{
 		"data":    tanggalList,
-		"message": "Data tanggal berhasil diambil",
+		"message": "Data RW berhasil diambil",
 	})
 }

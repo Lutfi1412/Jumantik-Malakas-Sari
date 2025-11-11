@@ -16,7 +16,7 @@ func GetTanggal(c *gin.Context) {
 
 	// 🔐 Validasi role
 	if role != "koordinator" && role != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Akses ditolak, hanya admin atau koordinator yang dapat melihat data tanggal"})
 		return
 	}
 
@@ -28,7 +28,7 @@ func GetTanggal(c *gin.Context) {
 		userHashingID,
 	).Scan(&rw)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal ambil RW: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengambil data RW pengguna"})
 		return
 	}
 
@@ -39,7 +39,7 @@ func GetTanggal(c *gin.Context) {
 		rw,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal ambil tanggal: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengambil data tanggal dari database"})
 		return
 	}
 	defer rows.Close()
@@ -49,7 +49,7 @@ func GetTanggal(c *gin.Context) {
 	for rows.Next() {
 		var t model.TanggalData
 		if err := rows.Scan(&t.ID, &t.Tanggal); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal baca data tanggal: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Terjadi kesalahan saat membaca data tanggal"})
 			return
 		}
 		tanggalList = append(tanggalList, t)

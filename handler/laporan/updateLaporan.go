@@ -17,13 +17,13 @@ func UpdateLaporan(c *gin.Context) {
 	role := c.GetString("role")
 
 	if role != "koordinator" && role != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Tidak diizinkan. Hanya admin atau koordinator yang dapat memperbarui laporan."})
 		return
 	}
 
 	var input model.UpdateLaporan
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Format data tidak valid"})
 		return
 	}
 
@@ -35,7 +35,7 @@ func UpdateLaporan(c *gin.Context) {
 	`
 	result, err := config.Pool.Exec(context.Background(), queryUpdate, input.DetailAlamat, userHashingID, laporanID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal memperbarui data laporan"})
 		return
 	}
 
