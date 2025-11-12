@@ -16,7 +16,9 @@ export async function createTanggal(tanggal) {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.messege || "Login gagal, periksa kembali akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Login gagal, periksa kembali akun Anda";
     throw new Error(msg);
   }
 }
@@ -30,7 +32,9 @@ export async function getTanggal() {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.messege || "Gagal membuat user, periksa akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal membuat user, periksa akun Anda";
     throw new Error(msg);
   }
 }
@@ -46,7 +50,9 @@ export async function updateTanggal(tanggal, id) {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.messege || "Gagal update user, periksa akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "tanggal sudah ada di akun ini";
     throw new Error(msg);
   }
 }
@@ -61,7 +67,8 @@ export async function deleteTanggal(ids) {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.messege ||
+      error.response?.data?.message ||
+      error.message ||
       "Gagal menghapus laporan, periksa akun Anda";
     throw new Error(msg);
   }
@@ -79,7 +86,7 @@ export async function getRW(tanggal) {
   } catch (error) {
     const msg =
       error.response?.data?.message ||
-      error.response?.data?.messege ||
+      error.message ||
       "Gagal mengambil data rw";
     throw new Error(msg);
   }

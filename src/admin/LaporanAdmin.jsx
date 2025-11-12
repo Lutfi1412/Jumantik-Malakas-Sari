@@ -10,7 +10,9 @@ import {
   getGambar,
 } from "../services/laporan";
 import DatePicker from "react-datepicker";
+import LoadingOverlay from "../components/LoadingOverlay";
 import "react-datepicker/dist/react-datepicker.css";
+import { set } from "date-fns";
 
 export default function LaporanAdmin({ role }) {
   const [rows, setRows] = useState([]);
@@ -21,21 +23,47 @@ export default function LaporanAdmin({ role }) {
   const [selected, setSelected] = useState([]); // ✅ untuk checkbox
   const [range, setRange] = useState([null, null]);
   const [startDate, endDate] = range;
+  const [loading, setLoading] = useState(false);
 
   // === Fetch data dari API ===
   useEffect(() => {
+    setLoading(true);
     (async () => {
       try {
         const res = await getLaporan();
         setRows(res.data || []);
       } catch (err) {
         console.error("Gagal get laporan:", err.message);
+      } finally {
+        setLoading(false);
       }
     })();
   }, []);
 
-  // === Filter data ===
-  // === Filter data ===
+  async function handleGambar(row) {
+    setLoading(true);
+    try {
+      const res = await getGambar(row.id);
+      const imageSrc = res.gambar.startsWith("data:image")
+        ? res.gambar
+        : `data:image/jpeg;base64,${res.gambar}`;
+
+      Swal.fire({
+        imageUrl: imageSrc,
+        imageAlt: "Gambar laporan",
+        showConfirmButton: false,
+        showCloseButton: true,
+        imageWidth: 400,
+        imageHeight: 600,
+        background: "#f8fafc",
+      });
+    } catch (err) {
+      console.error("Gagal ambil gambar:", err);
+      Swal.fire("Gagal ambil gambar", err.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  }
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
 
@@ -103,7 +131,7 @@ export default function LaporanAdmin({ role }) {
     });
 
     if (!confirm.isConfirmed) return;
-
+    setLoading(true);
     try {
       await deleteLaporan(selected); // kirim array ke backend
       setRows((prev) => prev.filter((r) => !selected.includes(r.id)));
@@ -111,6 +139,8 @@ export default function LaporanAdmin({ role }) {
       Swal.fire("Terhapus!", "Data berhasil dihapus.", "success");
     } catch (err) {
       Swal.fire("Gagal!", err.message, "error");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -121,6 +151,7 @@ export default function LaporanAdmin({ role }) {
   }
 
   async function saveEdit() {
+    setLoading(true);
     try {
       await updateLoparan(editing.detail_alamat, editing.id);
       setRows((rs) => rs.map((r) => (r.id === editing.id ? editing : r)));
@@ -133,6 +164,8 @@ export default function LaporanAdmin({ role }) {
       });
     } catch (err) {
       Swal.fire("Gagal update!", err.message, "error");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -160,6 +193,8 @@ export default function LaporanAdmin({ role }) {
       </>
     );
   }
+
+  if (loading) return <LoadingOverlay show={loading} />;
 
   return (
     <section className="max-w-7xl mx-auto">
@@ -251,26 +286,7 @@ export default function LaporanAdmin({ role }) {
                   <Td>{r.pelapor}</Td>
                   <Td className="text-center">
                     <button
-                      onClick={async () => {
-                        try {
-                          const res = await getGambar(r.id); // Ambil gambar berdasarkan ID
-                          const imageSrc = res.gambar.startsWith("data:image")
-                            ? res.gambar
-                            : `data:image/jpeg;base64,${res.gambar}`;
-
-                          Swal.fire({
-                            imageUrl: imageSrc,
-                            imageAlt: "Gambar laporan",
-                            showConfirmButton: false,
-                            showCloseButton: true,
-                            imageWidth: 400, // maksimal width
-                            imageHeight: 600, // maksimal height
-                          });
-                        } catch (err) {
-                          console.error("Gagal ambil gambar:", err);
-                          Swal.fire("Gagal ambil gambar", err.message, "error");
-                        }
-                      }}
+                      onClick={() => handleGambar(r)}
                       className="text-blue-600 hover:underline"
                     >
                       Lihat

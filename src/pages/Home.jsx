@@ -12,6 +12,8 @@ import { VscOpenPreview } from "react-icons/vsc";
 import { FaRegEdit } from "react-icons/fa";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import LoadingOverlay from "../components/LoadingOverlay";
+import { set } from "date-fns";
 
 const pad = (n) => String(n).padStart(2, "0");
 const fmt = (d) =>
@@ -26,10 +28,12 @@ export default function Home({ role }) {
   const [isAdd, setIsAdd] = useState(false);
   const [range, setRange] = useState([null, null]);
   const [startDate, endDate] = range;
+  const [loading, setLoading] = useState(false);
 
   // === Fetch Data Tanggal dari API ===
   useEffect(() => {
     async function fetchTanggal() {
+      setLoading(true);
       try {
         const res = await getTanggal();
         const data = res.data.map((t) => ({
@@ -39,6 +43,8 @@ export default function Home({ role }) {
         setRows(data);
       } catch (err) {
         console.error("Gagal ambil data tanggal:", err.message);
+      } finally {
+        setLoading(false);
       }
     }
     fetchTanggal();
@@ -52,9 +58,16 @@ export default function Home({ role }) {
     return rows.filter((r) => r.tgl >= start && r.tgl <= end);
   }, [rows, startDate, endDate]);
 
-  const allChecked = checked.size && checked.size === rows.length;
-  const toggleAll = (flag) =>
-    flag ? setChecked(new Set(rows.map((r) => r.id))) : setChecked(new Set());
+  const allChecked =
+    filtered.length > 0 && filtered.every((r) => checked.has(r.id));
+
+  const toggleAll = (flag) => {
+    if (flag) {
+      setChecked(new Set(filtered.map((r) => r.id)));
+    } else {
+      setChecked(new Set());
+    }
+  };
   const toggleOne = (id) => {
     const s = new Set(checked);
     s.has(id) ? s.delete(id) : s.add(id);
@@ -69,6 +82,7 @@ export default function Home({ role }) {
   };
 
   const submitAdd = async () => {
+    setLoading(true);
     try {
       await createTanggal(detailRow.tgl);
 
@@ -83,9 +97,12 @@ export default function Home({ role }) {
       Swal.fire("Berhasil", "Tanggal berhasil ditambahkan", "success");
     } catch (err) {
       Swal.fire("Gagal", err.message, "error");
+    } finally {
+      setLoading(false);
     }
   };
   const submitUpdate = async () => {
+    setLoading(true);
     try {
       await updateTanggal(detailRow.tgl, detailRow.id);
 
@@ -100,6 +117,8 @@ export default function Home({ role }) {
       Swal.fire("Berhasil", "Tanggal berhasil diperbarui", "success");
     } catch (err) {
       Swal.fire("Gagal", err.message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -110,7 +129,7 @@ export default function Home({ role }) {
     }
 
     const result = await Swal.fire({
-      title: "Yakin ingin menghapus?",
+      title: `Yakin ingin menghapus ${checked.size} data?`,
       text: "Data yang dihapus tidak bisa dikembalikan.",
       icon: "warning",
       showCancelButton: true,
@@ -120,6 +139,7 @@ export default function Home({ role }) {
     });
 
     if (result.isConfirmed) {
+      setLoading(true);
       try {
         const ids = Array.from(checked);
         await deleteTanggal(ids);
@@ -135,6 +155,8 @@ export default function Home({ role }) {
         Swal.fire("Berhasil", "Data berhasil dihapus", "success");
       } catch (err) {
         Swal.fire("Gagal", err.message, "error");
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -166,6 +188,8 @@ export default function Home({ role }) {
     window.location.href = `/previewkelurahan.html?id=${row.tgl}`;
     // navigate(`/${role}/lihat-surat/${row.tgl}`, { state: row });
   };
+
+  if (loading) return <LoadingOverlay show={loading} />;
 
   return (
     <div className="p-4 md:p-6">

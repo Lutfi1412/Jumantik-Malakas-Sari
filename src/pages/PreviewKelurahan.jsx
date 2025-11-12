@@ -5,9 +5,12 @@ import { getSuratAdmin } from "../services/surat";
 import { checkToken } from "../services/user";
 import { Navigate } from "react-router-dom"; // sesuaikan path-nya
 
-export default function PreviewKelurahan() {
+import Lottie from "lottie-react";
+import SandyLoading from "../assets/lottie/Sandy-Loading.json";
+
+export default function Preview() {
   const [laporan, setLaporan] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [role, setRole] = useState(null);
   const [error, setError] = useState(null);
 
@@ -35,15 +38,32 @@ export default function PreviewKelurahan() {
         console.error("Gagal memuat data:", err.message);
         setError(err.message);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchAll();
   }, []);
 
-  // ✅ Kondisi loading & error lebih teratur
-  if (loading) return <div>Loading data...</div>;
+  // === LOADING ===
+  if (isLoading)
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          backgroundColor: "#f9fafb",
+        }}
+      >
+        <Lottie
+          animationData={SandyLoading}
+          loop={true}
+          style={{ width: 200, height: 200 }}
+        />
+      </div>
+    );
 
   if (error) return <div className="text-red-500">Error: {error}</div>;
 
@@ -130,264 +150,280 @@ export default function PreviewKelurahan() {
           Download PDF (Print)
         </button>
 
-        {/* Isi utama laporan */}
-        <div
-          id="formPSN"
-          style={{
-            width: "297mm",
-            minHeight: "210mm",
-            background: "#fff",
-            paddingTop: "3mm",
-            paddingBottom: "15mm",
-            paddingLeft: "15mm",
-            paddingRight: "15mm",
-            boxShadow: "0 0 5px rgba(0,0,0,0.3)",
-            color: "#000",
-            fontSize: "10pt",
-            fontFamily: "Arial, sans-serif",
-          }}
-        >
-          {/* Header */}
-          <h2
+        {!laporan.data || laporan.data.length === 0 ? (
+          <div
             style={{
+              marginTop: "50px",
               textAlign: "center",
-              fontWeight: "bold",
-              fontSize: "12pt",
+              fontSize: "16px",
+              fontWeight: "500",
+              color: "#6b7280",
             }}
           >
-            FORMULIR LAPORAN KORWIL DALAM GERAKAN PEMBERANTASAN SARANG NYAMUK
-            (PSN)
-          </h2>
+            Data belum ditambahkan
+          </div>
+        ) : (
+          <div
+            id="formPSN"
+            style={{
+              width: "297mm",
+              minHeight: "210mm",
+              background: "#fff",
+              paddingTop: "3mm",
+              paddingBottom: "15mm",
+              paddingLeft: "15mm",
+              paddingRight: "15mm",
+              boxShadow: "0 0 5px rgba(0,0,0,0.3)",
+              color: "#000",
+              fontSize: "10pt",
+              fontFamily: "Arial, sans-serif",
+            }}
+          >
+            {/* Header */}
+            <h2
+              style={{
+                textAlign: "center",
+                fontWeight: "bold",
+                fontSize: "12pt",
+              }}
+            >
+              FORMULIR LAPORAN KORWIL DALAM GERAKAN PEMBERANTASAN SARANG NYAMUK
+              (PSN)
+            </h2>
 
-          {/* Info section */}
-          <div style={{ fontSize: "10pt" }}>
-            <table style={{ borderCollapse: "collapse" }}>
+            {/* Info section */}
+            <div style={{ fontSize: "10pt" }}>
+              <table style={{ borderCollapse: "collapse" }}>
+                <tbody>
+                  <tr>
+                    <td style={{ paddingRight: "20px", whiteSpace: "nowrap" }}>
+                      Hari/ Tanggal
+                    </td>
+                    <td style={{ paddingRight: "6px" }}>:</td>
+                    <td>
+                      {new Date(laporan.tanggal).toLocaleDateString("id-ID", {
+                        weekday: "long",
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ paddingRight: "6px", whiteSpace: "nowrap" }}>
+                      Kelurahan
+                    </td>
+                    <td style={{ paddingRight: "6px" }}>:</td>
+                    <td>Malaka Sari</td>
+                  </tr>
+                  <tr>
+                    <td style={{ paddingRight: "6px", whiteSpace: "nowrap" }}>
+                      Kecamatan
+                    </td>
+                    <td style={{ paddingRight: "6px" }}>:</td>
+                    <td>Duren Sawit</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Main Table */}
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: "7pt",
+                border: "1px solid black",
+                marginTop: "5mm",
+              }}
+            >
+              <thead>
+                <tr>
+                  <th rowSpan="3" style={tdBase}>
+                    RW
+                  </th>
+                  <th colSpan="2" style={tdBase}>
+                    Jumlah
+                  </th>
+                  <th colSpan="14" style={tdBase}>
+                    Jenis Tatanan
+                  </th>
+                  <th rowSpan="3" style={tdBase}>
+                    Total Bangunan
+                  </th>
+                  <th rowSpan="3" style={tdBase}>
+                    Total Jentik
+                  </th>
+                  <th rowSpan="3" style={tdBase}>
+                    ABJ
+                  </th>
+                </tr>
+                <tr>
+                  <th rowSpan="2" style={tdBase}>
+                    Jumantik
+                  </th>
+                  <th rowSpan="2" style={tdBase}>
+                    Jumantik Melapor
+                  </th>
+                  {[
+                    "Rumah Tangga",
+                    "Perkantoran",
+                    "Inst. Pendidikan",
+                    "TTU",
+                    "Fas Olah Raga",
+                    "TPM",
+                    "Fas Kesehatan",
+                  ].map((title, i) => (
+                    <th key={i} colSpan="2" style={tdBase}>
+                      {title}
+                    </th>
+                  ))}
+                </tr>
+                <tr>
+                  {[...Array(14)].map((_, i) => (
+                    <th key={i} style={tdBase}>
+                      {i % 2 === 0 ? "Dikunjungi" : "(+)"}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
               <tbody>
+                {laporan.data.map((row, i) => (
+                  <tr key={i}>
+                    <td style={tdBase}>{row.rw}</td>
+                    <td style={tdBase}>{row.jumantik}</td>
+                    <td style={tdBase}>{row.melapor}</td>
+
+                    {Object.values(row.jenis_tatanan).map((jenis, j) => (
+                      <React.Fragment key={`jenis-${i}-${j}`}>
+                        <td style={tdBase}>{jenis.dikunjungi}</td>
+                        <td style={tdBase}>{jenis.positif}</td>
+                      </React.Fragment>
+                    ))}
+
+                    <td style={tdBase}>{row.total_bangunan}</td>
+                    <td style={tdBase}>{row.total_jentik}</td>
+                    <td style={tdBase}>{row.abj}</td>
+                  </tr>
+                ))}
+
+                {Array.from({
+                  length: Math.max(0, 18 - laporan.data.length),
+                }).map((_, i) => (
+                  <tr key={`empty-${i}`}>
+                    {Array.from({ length: 20 }).map((_, j) => (
+                      <td key={`empty-${i}-${j}`} style={tdBase}></td>
+                    ))}
+                  </tr>
+                ))}
+
+                {/* Total Row */}
                 <tr>
-                  <td style={{ paddingRight: "20px", whiteSpace: "nowrap" }}>
-                    Hari/ Tanggal
-                  </td>
-                  <td style={{ paddingRight: "6px" }}>:</td>
-                  <td>
-                    {new Date(laporan.tanggal).toLocaleDateString("id-ID", {
-                      weekday: "long",
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ paddingRight: "6px", whiteSpace: "nowrap" }}>
-                    Kelurahan
-                  </td>
-                  <td style={{ paddingRight: "6px" }}>:</td>
-                  <td>Malaka Sari</td>
-                </tr>
-                <tr>
-                  <td style={{ paddingRight: "6px", whiteSpace: "nowrap" }}>
-                    Kecamatan
-                  </td>
-                  <td style={{ paddingRight: "6px" }}>:</td>
-                  <td>Duren Sawit</td>
+                  <td style={{ ...tdBase, fontWeight: "bold" }}>Total</td>
+                  <td style={tdBase}>{laporan.total.jumantik}</td>
+                  <td style={tdBase}>{laporan.total.melapor}</td>
+
+                  {Object.values(laporan.total.jenis_tatanan).map(
+                    (jenis, j) => (
+                      <React.Fragment key={`total-jenis-${j}`}>
+                        <td style={tdBase}>{jenis.dikunjungi}</td>
+                        <td style={tdBase}>{jenis.positif}</td>
+                      </React.Fragment>
+                    )
+                  )}
+
+                  <td style={tdBase}>{laporan.total.total_bangunan}</td>
+                  <td style={tdBase}>{laporan.total.total_jentik}</td>
+                  <td style={tdBase}>{laporan.total.abj}</td>
                 </tr>
               </tbody>
             </table>
-          </div>
 
-          {/* Main Table */}
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: "7pt",
-              border: "1px solid black",
-              marginTop: "5mm",
-            }}
-          >
-            <thead>
-              <tr>
-                <th rowSpan="3" style={tdBase}>
-                  RW
-                </th>
-                <th colSpan="2" style={tdBase}>
-                  Jumlah
-                </th>
-                <th colSpan="14" style={tdBase}>
-                  Jenis Tatanan
-                </th>
-                <th rowSpan="3" style={tdBase}>
-                  Total Bangunan
-                </th>
-                <th rowSpan="3" style={tdBase}>
-                  Total Jentik
-                </th>
-                <th rowSpan="3" style={tdBase}>
-                  ABJ
-                </th>
-              </tr>
-              <tr>
-                <th rowSpan="2" style={tdBase}>
-                  Jumantik
-                </th>
-                <th rowSpan="2" style={tdBase}>
-                  Jumantik Melapor
-                </th>
-                {[
-                  "Rumah Tangga",
-                  "Perkantoran",
-                  "Inst. Pendidikan",
-                  "TTU",
-                  "Fas Olah Raga",
-                  "TPM",
-                  "Fas Kesehatan",
-                ].map((title, i) => (
-                  <th key={i} colSpan="2" style={tdBase}>
-                    {title}
-                  </th>
-                ))}
-              </tr>
-              <tr>
-                {[...Array(14)].map((_, i) => (
-                  <th key={i} style={tdBase}>
-                    {i % 2 === 0 ? "Dikunjungi" : "(+)"}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody>
-              {laporan.data.map((row, i) => (
-                <tr key={i}>
-                  <td style={tdBase}>{row.rw}</td>
-                  <td style={tdBase}>{row.jumantik}</td>
-                  <td style={tdBase}>{row.melapor}</td>
-
-                  {Object.values(row.jenis_tatanan).map((jenis, j) => (
-                    <React.Fragment key={`jenis-${i}-${j}`}>
-                      <td style={tdBase}>{jenis.dikunjungi}</td>
-                      <td style={tdBase}>{jenis.positif}</td>
-                    </React.Fragment>
-                  ))}
-
-                  <td style={tdBase}>{row.total_bangunan}</td>
-                  <td style={tdBase}>{row.total_jentik}</td>
-                  <td style={tdBase}>{row.abj}</td>
-                </tr>
-              ))}
-
-              {Array.from({
-                length: Math.max(0, 18 - laporan.data.length),
-              }).map((_, i) => (
-                <tr key={`empty-${i}`}>
-                  {Array.from({ length: 20 }).map((_, j) => (
-                    <td key={`empty-${i}-${j}`} style={tdBase}></td>
-                  ))}
-                </tr>
-              ))}
-
-              {/* Total Row */}
-              <tr>
-                <td style={{ ...tdBase, fontWeight: "bold" }}>Total</td>
-                <td style={tdBase}>{laporan.total.jumantik}</td>
-                <td style={tdBase}>{laporan.total.melapor}</td>
-
-                {Object.values(laporan.total.jenis_tatanan).map((jenis, j) => (
-                  <React.Fragment key={`total-jenis-${j}`}>
-                    <td style={tdBase}>{jenis.dikunjungi}</td>
-                    <td style={tdBase}>{jenis.positif}</td>
-                  </React.Fragment>
-                ))}
-
-                <td style={tdBase}>{laporan.total.total_bangunan}</td>
-                <td style={tdBase}>{laporan.total.total_jentik}</td>
-                <td style={tdBase}>{laporan.total.abj}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Catatan dan tanda tangan tetap sama */}
-          <div style={{ fontSize: "9pt", marginTop: "5mm" }}>
-            <p>
-              <span style={{ fontWeight: "bold" }}>Catatan :</span>
-            </p>
-            <p>
-              Angka Bebas Jentik (ABJ) ={" "}
-              <span>
-                <div style={{ display: "inline-block", textAlign: "center" }}>
-                  <div
-                    style={{
-                      borderBottom: "1px solid black",
-                      paddingBottom: "2px",
-                      minWidth: "250px",
-                    }}
-                  >
-                    Jumlah bangunan yang diperiksa tidak ada jentik
-                  </div>
-                  <div>Jumlah seluruh bangunan yang diperiksa</div>
-                </div>{" "}
-                x100%
-              </span>
-            </p>
-            <p>ABJ yang diharapkan adalah &gt; 95 %</p>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: "10pt",
-              textAlign: "center",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <p>Mengetahui</p>
-              <p>Plh. LURAH KELURAHAN MALAKA SARI,</p>
-              <img
-                src="/image/ttd.png"
-                alt="Tanda Tangan"
-                style={{ height: "20mm", objectFit: "contain" }}
-              />
-              <div style={{ lineHeight: "1", marginTop: "-2px" }}>
-                <p style={{ margin: 0 }}>RASIKIN, S.IP, M.SI</p>
-                <p style={{ margin: 2 }}>196904101996031004</p>
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
+            {/* Catatan dan tanda tangan tetap sama */}
+            <div style={{ fontSize: "9pt", marginTop: "5mm" }}>
               <p>
-                Jakarta,{" "}
-                {new Date(laporan.tanggal).toLocaleDateString("id-ID", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
+                <span style={{ fontWeight: "bold" }}>Catatan :</span>
               </p>
-              <p>KASI KESRA KEL. MALAKA SARI</p>
-              <img
-                src="/image/ttd.png"
-                alt="Tanda Tangan"
-                style={{ height: "20mm", objectFit: "contain" }}
-              />
-              <div style={{ lineHeight: "1", marginTop: "-2px" }}>
-                <p style={{ margin: 0 }}>NINING SETIANINGSIH, SH</p>
-                <p style={{ margin: 2 }}>NIP 196809171997032005</p>
+              <p>
+                Angka Bebas Jentik (ABJ) ={" "}
+                <span>
+                  <div style={{ display: "inline-block", textAlign: "center" }}>
+                    <div
+                      style={{
+                        borderBottom: "1px solid black",
+                        paddingBottom: "2px",
+                        minWidth: "250px",
+                      }}
+                    >
+                      Jumlah bangunan yang diperiksa tidak ada jentik
+                    </div>
+                    <div>Jumlah seluruh bangunan yang diperiksa</div>
+                  </div>{" "}
+                  x100%
+                </span>
+              </p>
+              <p>ABJ yang diharapkan adalah &gt; 95 %</p>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "10pt",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <p>Mengetahui</p>
+                <p>Plh. LURAH KELURAHAN MALAKA SARI,</p>
+                <img
+                  src="/image/ttd.png"
+                  alt="Tanda Tangan"
+                  style={{ height: "20mm", objectFit: "contain" }}
+                />
+                <div style={{ lineHeight: "1", marginTop: "-2px" }}>
+                  <p style={{ margin: 0 }}>RASIKIN, S.IP, M.SI</p>
+                  <p style={{ margin: 2 }}>196904101996031004</p>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <p>
+                  Jakarta,{" "}
+                  {new Date(laporan.tanggal).toLocaleDateString("id-ID", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+                <p>KASI KESRA KEL. MALAKA SARI</p>
+                <img
+                  src="/image/ttd.png"
+                  alt="Tanda Tangan"
+                  style={{ height: "20mm", objectFit: "contain" }}
+                />
+                <div style={{ lineHeight: "1", marginTop: "-2px" }}>
+                  <p style={{ margin: 0 }}>NINING SETIANINGSIH, SH</p>
+                  <p style={{ margin: 2 }}>NIP 196809171997032005</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
+        {/* Isi utama laporan */}
       </div>
     </div>
   );

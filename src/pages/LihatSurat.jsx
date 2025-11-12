@@ -4,6 +4,7 @@ import { TbListDetails } from "react-icons/tb";
 import { VscOpenPreview } from "react-icons/vsc";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import Header from "../components/Header";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 export default function LihatSurat({ role }) {
   const [rows, setRows] = useState([]);
@@ -11,9 +12,11 @@ export default function LihatSurat({ role }) {
   const { tgl } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState();
 
   // === Ambil Data RW Berdasarkan Tanggal ===
   useEffect(() => {
+    setLoading(true);
     async function fetchRW() {
       try {
         const res = await getRW(tgl);
@@ -24,6 +27,8 @@ export default function LihatSurat({ role }) {
         setRows(data);
       } catch (err) {
         console.error("Gagal ambil data RW:", err.message);
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -37,6 +42,8 @@ export default function LihatSurat({ role }) {
   const Preview = (row) => {
     window.location.href = `/preview.html?id=${row.id}`;
   };
+
+  if (loading) return <LoadingOverlay />;
 
   return (
     <div>

@@ -4,6 +4,8 @@ import { api } from "../lib/api";
 import { getRT, createLaporan } from "../services/laporan";
 import Header from "../components/Header";
 import { compressImageToBase64 } from "../utils/image";
+import LoadingOverlay from "../components/LoadingOverlay";
+import Swal from "sweetalert2";
 
 export default function LaporanPage() {
   const [alamat, setAlamat] = useState("");
@@ -12,18 +14,21 @@ export default function LaporanPage() {
   const [selectedRT, setSelectedRT] = useState("");
   const fileRef = useRef(null);
   const isProcessing = useRef(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState();
   const [gpsAccuracy, setGpsAccuracy] = useState(null); // ✅ Track akurasi GPS
 
   const mobile = useMemo(() => isMobile(), []);
 
   useEffect(() => {
+    setLoading(true);
     const fetchRT = async () => {
       try {
         const res = await getRT();
         setRtCount(res.rt || 0);
       } catch (err) {
         console.error("Gagal ambil data RT:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchRT();
@@ -44,9 +49,20 @@ export default function LaporanPage() {
   };
 
   const submit = async () => {
-    if (!photo) return alert("Harap ambil foto terlebih dahulu.");
-    if (!selectedRT) return alert("Harap pilih RT terlebih dahulu.");
-    if (!alamat.trim()) return alert("Harap isi detail alamat.");
+    if (!photo)
+      return Swal.fire(
+        "Oops...",
+        "Harap kirim foto terlebih dahulu",
+        "warning"
+      );
+    if (!selectedRT)
+      return Swal.fire("Oops...", "Harap pilih RT terlebih dahulu", "warning");
+    if (!alamat.trim())
+      return Swal.fire(
+        "Oops...",
+        "Harap isi alamat terlebih dahulu",
+        "warning"
+      );
 
     try {
       setLoading(true);
@@ -71,7 +87,7 @@ export default function LaporanPage() {
         String(position.longitude)
       );
 
-      alert("✅ Laporan terkirim!");
+      Swal.fire("Berhasil!", "Laporan berhasil dikirim!", "success");
 
       // ✅ Reset form
       if (photo?.preview) URL.revokeObjectURL(photo.preview);
@@ -82,7 +98,7 @@ export default function LaporanPage() {
       if (fileRef.current) fileRef.current.value = "";
     } catch (err) {
       console.error("Error submit:", err);
-      alert("❌ Gagal mengirim laporan: " + (err.message || err));
+      Swal.fire("Gagal", err.message || "Gagal mengirim laporan", "error");
     } finally {
       setLoading(false);
     }
@@ -111,6 +127,8 @@ export default function LaporanPage() {
       </div>
     );
   }
+
+  if (loading) return <LoadingOverlay show={loading} />;
 
   return (
     <div className="pb-24 sm:pb-10">
@@ -187,12 +205,11 @@ export default function LaporanPage() {
 
             <button
               onClick={submit}
-              disabled={loading}
               className={`w-full bg-blue-600 text-white rounded-2xl py-3 font-semibold text-lg shadow-lg transition-transform active:scale-95 ${
                 loading ? "opacity-60" : ""
               }`}
             >
-              {loading ? "Mengirim..." : "✉️ Kirim Laporan"}
+              ✉️ Kirim Laporan
             </button>
           </div>
         </div>

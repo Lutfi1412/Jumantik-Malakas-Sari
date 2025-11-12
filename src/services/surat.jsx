@@ -28,7 +28,7 @@ export async function getSuratRW(tanggal_id) {
   } catch (error) {
     const msg =
       error.response?.data?.message ||
-      error.response?.data?.messege ||
+      error.message ||
       "Gagal mengambil data surat";
     throw new Error(msg);
   }
@@ -45,7 +45,7 @@ export async function getSuratAdmin(tanggal) {
   } catch (error) {
     const msg =
       error.response?.data?.message ||
-      error.response?.data?.messege ||
+      error.message ||
       "Gagal mengambil data surat";
     throw new Error(msg);
   }
@@ -100,7 +100,7 @@ export async function updateSurat(id, data) {
   } catch (error) {
     const msg =
       error.response?.data?.message ||
-      error.response?.data?.error ||
+      error.message ||
       "Gagal update surat, periksa kembali data Anda";
     throw new Error(msg);
   }
@@ -115,9 +115,7 @@ export async function deleteSurat(ids) {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      "Gagal menghapus surat";
+      error.response?.data?.message || error.message || "Gagal menghapus surat";
     throw new Error(msg);
   }
 }
@@ -138,7 +136,7 @@ export async function createSurat(data) {
   } catch (error) {
     const msg =
       error.response?.data?.message ||
-      error.response?.data?.error ||
+      error.message ||
       "Gagal membuat surat, periksa kembali data Anda";
     throw new Error(msg);
   }

@@ -24,7 +24,9 @@ export async function login(username, password) {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.error || "Login gagal, periksa kembali akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Login gagal, periksa kembali akun Anda";
     throw new Error(msg);
   }
 }
@@ -35,7 +37,9 @@ export async function checkToken(token) {
     return res.data; // Ambil string "admin" saja
   } catch (error) {
     const msg =
-      error.response?.data?.error || "Login gagal, periksa kembali akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Login gagal, periksa kembali akun Anda";
     throw new Error(msg);
   }
 }
@@ -59,7 +63,9 @@ export async function createUser(
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.error || "Gagal membuat user, periksa akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal membuat user, periksa akun Anda";
     throw new Error(msg);
   }
 }
@@ -73,7 +79,9 @@ export async function getUser() {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.error || "Gagal membuat user, periksa akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal membuat user, periksa akun Anda";
     throw new Error(msg);
   }
 }
@@ -89,7 +97,9 @@ export async function updateUser(username, password_new, id) {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.error || "Gagal update user, periksa akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal update user, periksa akun Anda";
     throw new Error(msg);
   }
 }
@@ -103,7 +113,9 @@ export async function deleteUser(id) {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.error || "Gagal menghapus user, periksa akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menghapus user, periksa akun Anda";
     throw new Error(msg);
   }
 }

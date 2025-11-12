@@ -11,6 +11,7 @@ import {
 import { getRT } from "../services/laporan";
 import Swal from "sweetalert2";
 import SummaryCards from "../components/Card";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 export default function CreateSuratRT() {
   const [rows, setRows] = useState([]);
@@ -18,6 +19,7 @@ export default function CreateSuratRT() {
   const [allChecked, setAllChecked] = useState(false);
   const [search, setSearch] = useState("");
   const [rtOptions, setRtOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const [open, setOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
@@ -52,6 +54,7 @@ export default function CreateSuratRT() {
 
   // Fetch data surat (demo)
   const fetchData = async (tanggal_id) => {
+    setLoading(true);
     try {
       const res = await getSuratRW(Number(tanggal_id)); // pastikan integer
       console.log("DATA API:", res);
@@ -61,10 +64,13 @@ export default function CreateSuratRT() {
       setTotal(res.total || null); // <-- simpan total buat SummaryCards
     } catch (err) {
       console.error("Gagal ambil data surat:", err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   async function fetchRTOptions() {
+    setLoading(true);
     try {
       const res = await getRT(); // hasilnya misal { rt: 3 }
       const jumlahRT = res.rt ?? 0;
@@ -74,6 +80,8 @@ export default function CreateSuratRT() {
       setRtOptions(options);
     } catch (err) {
       console.error("Gagal memuat RT:", err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -81,7 +89,7 @@ export default function CreateSuratRT() {
   const toggleAll = (checkedAll) => {
     setAllChecked(checkedAll);
     if (checkedAll) {
-      setChecked(new Set(rows.map((r) => r.id)));
+      setChecked(new Set(filteredRows.map((r) => r.id)));
     } else {
       setChecked(new Set());
     }
@@ -140,6 +148,8 @@ export default function CreateSuratRT() {
 
     if (!result.isConfirmed) return;
 
+    setLoading(true);
+
     try {
       // Konversi semua field kosong jadi 0
       const cleanData = {
@@ -174,6 +184,8 @@ export default function CreateSuratRT() {
       setOpen(false); // tutup modal
     } catch (err) {
       Swal.fire("Error", err.message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -188,6 +200,7 @@ export default function CreateSuratRT() {
     });
     if (!result.isConfirmed) return;
 
+    setLoading(true);
     try {
       await updateSurat(editId, detailRow);
       Swal.fire("Berhasil", "Data berhasil diperbarui", "success");
@@ -195,6 +208,8 @@ export default function CreateSuratRT() {
       setOpen(false);
     } catch (err) {
       Swal.fire("Error", err.message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -211,6 +226,7 @@ export default function CreateSuratRT() {
     });
     if (!result.isConfirmed) return;
 
+    setLoading(true);
     try {
       const ids = Array.from(checked); // ambil ID dari Set()
       await deleteSurat(ids);
@@ -220,6 +236,8 @@ export default function CreateSuratRT() {
       setAllChecked(false);
     } catch (err) {
       Swal.fire("Error", err.message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -241,6 +259,8 @@ export default function CreateSuratRT() {
       },
     }));
   };
+
+  if (loading) return <LoadingOverlay show={loading} />;
 
   return (
     <div>

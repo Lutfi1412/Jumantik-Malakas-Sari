@@ -17,6 +17,7 @@
     "jspdf": "^3.0.3",
     "jwt-decode": "^3.1.2",
     "lightningcss": "^1.30.2",
+    "lottie-react": "^2.4.1",
     "react": "^19.2.0",
     "react-date-range": "^2.0.1",
     "react-datepicker": "^8.8.0",

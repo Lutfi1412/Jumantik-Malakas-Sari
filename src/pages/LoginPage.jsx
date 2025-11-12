@@ -4,12 +4,13 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { login } from "../services/user";
 import jwt_decode from "jwt-decode";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState();
   const navigate = useNavigate();
 
   const submit = async (e) => {
@@ -21,13 +22,6 @@ export default function LoginPage() {
 
       if (data.token) {
         localStorage.setItem("token", data.token);
-
-        await Swal.fire({
-          icon: "success",
-          title: "Login Berhasil!",
-          timer: 1500,
-          showConfirmButton: false,
-        });
 
         const token = localStorage.getItem("token");
         const decoded = jwt_decode(token);
@@ -52,6 +46,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+  if (loading) return <LoadingOverlay show={loading} />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -95,10 +90,9 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={loading}
             className="w-full bg-blue-600 text-white rounded-lg py-2 text-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {loading ? "Loading..." : "Login"}
+            Login
           </button>
         </form>
       </div>

@@ -27,7 +27,9 @@ export async function getLaporan() {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.error || "Gagal membuat user, periksa akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal membuat user, periksa akun Anda";
     throw new Error(msg);
   }
 }
@@ -42,8 +44,9 @@ export async function updateLoparan(detail_alamat, id) {
     );
     return res.data;
   } catch (error) {
-    const msg =
-      error.response?.data?.error || "Gagal update user, periksa akun Anda";
+    coerror.response?.data?.message ||
+      error.message ||
+      "Gagal update user, periksa akun Anda";
     throw new Error(msg);
   }
 }
@@ -57,7 +60,8 @@ export async function deleteLaporan(ids) {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.error ||
+      error.response?.data?.message ||
+      error.message ||
       "Gagal menghapus laporan, periksa akun Anda";
     throw new Error(msg);
   }
@@ -80,7 +84,9 @@ export async function createLaporan(
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.message || "Gagal membuat user, periksa akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal membuat user, periksa akun Anda";
     throw new Error(msg);
   }
 }
@@ -94,13 +100,16 @@ export async function getRT() {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.error || "Gagal membuat user, periksa akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal membuat user, periksa akun Anda";
     throw new Error(msg);
   }
 }
 
 export async function getGambar(id) {
   const token = localStorage.getItem("token");
+
   try {
     const res = await api.get(`/auth/get-gambar/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -108,7 +117,9 @@ export async function getGambar(id) {
     return res.data;
   } catch (error) {
     const msg =
-      error.response?.data?.message || "Gagal membuat user, periksa akun Anda";
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal membuat user, periksa akun Anda";
     throw new Error(msg);
   }
 }

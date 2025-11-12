@@ -5,6 +5,7 @@ import Modal from "../shared/Modal";
 import { createUser, getUser, updateUser, deleteUser } from "../services/user";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const MySwal = withReactContent(Swal);
 
@@ -31,13 +32,14 @@ export default function AccountsAdmin() {
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("All role");
   const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState();
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
+      setLoading(true);
       try {
         const res = await getUser();
         setRows(res.data.table_user);
@@ -97,6 +99,7 @@ export default function AccountsAdmin() {
 
   // ================= SAVE FUNCTION =================
   async function save() {
+    setLoading(true);
     try {
       if (editing._isNew) {
         // === ADD USER ===
@@ -125,7 +128,6 @@ export default function AccountsAdmin() {
         }
 
         await createUser(nama, username, password, role, rt, rw, nama_rw);
-        MySwal.fire("Berhasil!", "User berhasil ditambahkan!", "success");
       } else {
         // === UPDATE USER ===
         if (!editing.username || !editing.password_new)
@@ -136,7 +138,6 @@ export default function AccountsAdmin() {
           );
 
         await updateUser(editing.username, editing.password_new, editing.id);
-        MySwal.fire("Berhasil!", "User berhasil diupdate!", "success");
       }
 
       setOpen(false);
@@ -148,6 +149,8 @@ export default function AccountsAdmin() {
     } catch (err) {
       console.error(err);
       MySwal.fire("Gagal", err.message || "Terjadi kesalahan", "error");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -162,6 +165,7 @@ export default function AccountsAdmin() {
       cancelButtonText: "Batal",
     }).then(async (result) => {
       if (result.isConfirmed) {
+        setLoading(true);
         try {
           await deleteUser(row.id);
           MySwal.fire("Berhasil!", "User berhasil dihapus!", "success");
@@ -172,11 +176,14 @@ export default function AccountsAdmin() {
         } catch (err) {
           console.error(err);
           MySwal.fire("Gagal", err.message || "Gagal menghapus user", "error");
+        } finally {
+          setLoading(false);
         }
       }
     });
   }
 
+  if (loading) return <LoadingOverlay show={loading} />;
   return (
     <section className="max-w-7xl mx-auto">
       {/* Top bar */}
