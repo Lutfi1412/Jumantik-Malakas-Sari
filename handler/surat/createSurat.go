@@ -84,11 +84,30 @@ func CreateSurat(c *gin.Context) {
 		return
 	}
 
+	// 🧾 Cek apakah RT sudah ada di tanggal_id yang sama
+	var exists bool
+	checkQuery := `
+	SELECT EXISTS(
+		SELECT 1 FROM surat WHERE tanggal_id = $1 AND rt = $2
+	)
+`
+	err = config.Pool.QueryRow(context.Background(), checkQuery, surat.TanggalID, surat.RT).Scan(&exists)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal memeriksa data surat"})
+		return
+	}
+
+	// 🔒 Jika data sudah ada, kirim pesan error
+	if exists {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Data RT sudah ditambahkan"})
+		return
+	}
+
 	// 🧾 Simpan ke database
 	query := `
 	INSERT INTO surat (tanggal_id, rt, total_bangunan, total_jentik, abj, jumlah, jenis_tatanan)
 	VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)
-	`
+`
 	_, err = config.Pool.Exec(
 		context.Background(),
 		query,
@@ -106,4 +125,5 @@ func CreateSurat(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Surat berhasil dibuat"})
+
 }

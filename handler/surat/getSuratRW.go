@@ -90,37 +90,38 @@ func GetSuratRW(c *gin.Context) {
 	}
 
 	for rows.Next() {
-		var id, rt int
+		var id, rt, totalBangunan, totalJentik int
+		var abjFloat float32
 		var jumlahJSON, jenisJSON []byte
-		var totalBangunan, totalJentik int
-		var abjFloat float64
 
-		err := rows.Scan(&id, &rt, &jumlahJSON, &jenisJSON, &totalBangunan, &totalJentik, &abjFloat)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal membaca data surat"})
+		if err := rows.Scan(&id, &rt, &jumlahJSON, &jenisJSON, &totalBangunan, &totalJentik, &abjFloat); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 
 		var jumlah map[string]int
 		if err := json.Unmarshal(jumlahJSON, &jumlah); err != nil {
-			continue
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal parsing jumlah"})
+			return
 		}
 
 		var jenis map[string]map[string]int
 		if err := json.Unmarshal(jenisJSON, &jenis); err != nil {
-			continue
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal parsing jenis_tatanan"})
+			return
 		}
 
+		total.Jumantik += jumlah["jumantik"]
+		total.Melapor += jumlah["melapor"]
+		total.TotalBangunan += totalBangunan
+		total.TotalJentik += totalJentik
+
 		for key, val := range jenis {
-			t := total.JenisTatanan[key]
-			if t != nil {
+			if t, ok := total.JenisTatanan[key]; ok {
 				t["dikunjungi"] += val["dikunjungi"]
 				t["positif"] += val["positif"]
 			}
 		}
-
-		total.TotalBangunan += totalBangunan
-		total.TotalJentik += totalJentik
 
 		dataList = append(dataList, model.SuratData{
 			ID:            id,

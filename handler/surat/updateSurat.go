@@ -35,9 +35,17 @@ func UpdateSurat(c *gin.Context) {
 		return
 	}
 
-	var rwTanggal int
+	var rwTanggal, idtanggal int
+
 	err = config.Pool.QueryRow(context.Background(),
-		`SELECT rw FROM tanggal WHERE id = $1`, id,
+		`SELECT tanggal_id FROM surat WHERE id = $1`, id,
+	).Scan(&idtanggal)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Data tanggal tidak ditemukan"})
+		return
+	}
+	err = config.Pool.QueryRow(context.Background(),
+		`SELECT rw FROM tanggal WHERE id = $1`, idtanggal,
 	).Scan(&rwTanggal)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Data tanggal yang dimaksud tidak ditemukan"})
