@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import LoadingOverlay from "../components/LoadingOverlay";
+
 import { checkToken } from "../services/user";
 
 export function HomeRedirect() {
@@ -31,6 +31,6 @@ export function HomeRedirect() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <LoadingOverlay show={loading} />;
+  if (loading) return <div></div>;
   return <Navigate to={redirect} replace />;
 }
