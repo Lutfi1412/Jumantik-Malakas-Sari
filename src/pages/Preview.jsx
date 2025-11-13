@@ -101,7 +101,9 @@ export default function Preview() {
       297,
       (297 * canvas.height) / canvas.width
     );
-    pdf.save("Surat_Pengajuan.pdf");
+    const tanggal = new Date(laporan.tanggal).toISOString().split("T")[0];
+    const namaFile = `jumantik-RW0${laporan.rw}-${tanggal}.pdf`;
+    pdf.save(namaFile);
   };
 
   const tdBase = {
