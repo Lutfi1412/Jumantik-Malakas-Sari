@@ -36,7 +36,7 @@ export default function Home({ role }) {
       setLoading(true);
       try {
         const res = await getTanggal();
-        const data = res.data.map((t) => ({
+        const data = (res.data || []).map((t) => ({
           id: t.id,
           tgl: t.tanggal,
         }));
@@ -145,7 +145,7 @@ export default function Home({ role }) {
         await deleteTanggal(ids);
 
         const res = await getTanggal();
-        const data = res.data.map((t) => ({
+        const data = (res.data || []).map((t) => ({
           id: t.id,
           tgl: t.tanggal,
         }));
