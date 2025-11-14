@@ -368,7 +368,7 @@ export default function AccountsAdmin() {
                           setEditing({ ...editing, rt: e.target.value })
                         }
                         className="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-sky-500"
-                        placeholder="Masukan RT…"
+                        placeholder="Masukan Jumlah RT di RW Tersebut…"
                       />
                     </div>
                     <div>

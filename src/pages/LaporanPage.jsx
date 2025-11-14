@@ -7,7 +7,7 @@ import { compressImageToBase64 } from "../utils/image";
 import LoadingOverlay from "../components/LoadingOverlay";
 import Swal from "sweetalert2";
 
-export default function LaporanPage() {
+export default function LaporanPage({ role }) {
   const [alamat, setAlamat] = useState("");
   const [photo, setPhoto] = useState(null);
   const [rtCount, setRtCount] = useState(0);
@@ -146,7 +146,7 @@ export default function LaporanPage() {
           className="fixed inset-0 bg-white flex flex-col"
           style={{ overscrollBehavior: "none" }}
         >
-          <Header title={`Jumantik | Koordinator`} />
+          <Header title={`Jumantik | ${role}`} />
           <div className="flex-1 flex items-center justify-center">
             <button
               onClick={openCamera}
