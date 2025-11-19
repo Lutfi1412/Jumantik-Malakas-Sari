@@ -13,6 +13,15 @@ export default function Preview() {
   const [isLoading, setIsLoading] = useState(true);
   const [role, setRole] = useState(null);
   const [error, setError] = useState(null);
+  const jenisOrder = [
+    "rumah_tangga",
+    "perkantoran",
+    "inst_pendidikan",
+    "ttu",
+    "fas_olahraga",
+    "tpm",
+    "fas_kesehatan",
+  ];
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -297,12 +306,18 @@ export default function Preview() {
                     <td style={tdBase}>{row.jumantik}</td>
                     <td style={tdBase}>{row.melapor}</td>
 
-                    {Object.values(row.jenis_tatanan).map((jenis, j) => (
-                      <React.Fragment key={`jenis-${i}-${j}`}>
-                        <td style={tdBase}>{jenis.dikunjungi}</td>
-                        <td style={tdBase}>{jenis.positif}</td>
-                      </React.Fragment>
-                    ))}
+                    {jenisOrder.map((key) => {
+                      const jenis = row.jenis_tatanan[key] || {
+                        dikunjungi: 0,
+                        positif: 0,
+                      };
+                      return (
+                        <React.Fragment key={`jenis-${i}-${key}`}>
+                          <td style={tdBase}>{jenis.dikunjungi}</td>
+                          <td style={tdBase}>{jenis.positif}</td>
+                        </React.Fragment>
+                      );
+                    })}
 
                     <td style={tdBase}>{row.total_bangunan}</td>
                     <td style={tdBase}>{row.total_jentik}</td>
@@ -326,14 +341,15 @@ export default function Preview() {
                   <td style={tdBase}>{laporan.total.jumantik}</td>
                   <td style={tdBase}>{laporan.total.melapor}</td>
 
-                  {Object.values(laporan.total.jenis_tatanan).map(
-                    (jenis, j) => (
-                      <React.Fragment key={`total-jenis-${j}`}>
+                  {jenisOrder.map((key) => {
+                    const jenis = laporan.total.jenis_tatanan[key];
+                    return (
+                      <React.Fragment key={`total-jenis-${key}`}>
                         <td style={tdBase}>{jenis.dikunjungi}</td>
                         <td style={tdBase}>{jenis.positif}</td>
                       </React.Fragment>
-                    )
-                  )}
+                    );
+                  })}
 
                   <td style={tdBase}>{laporan.total.total_bangunan}</td>
                   <td style={tdBase}>{laporan.total.total_jentik}</td>
